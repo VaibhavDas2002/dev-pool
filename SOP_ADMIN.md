@@ -42,7 +42,7 @@ The objective of this procedure is to ensure a transparent, democratic, and erro
 
 ---
 
-## 2. SOP Step 2: Date Option Configuration & Weekend Policy
+## 2. SOP Step 2: Date Option Customization & Interactive Calendar Selection
 
 ### 2.1 Date Eligibility Criteria
 - **Mandatory Business Rule:** All proposed visit dates must be **strictly after November 24, 2026**.
@@ -52,17 +52,34 @@ The objective of this procedure is to ensure a transparent, democratic, and erro
   CONSTRAINT min_date_after_nov_24_2026 CHECK (min_date >= '2026-11-25')
   ```
 
-### 2.2 Adding New Date Options
-1. Go to **Admin Control Center** (`/admin`) → **Manage Date Options**.
-2. Select a date using the date picker.
-3. If the **Disable Weekends** toggle is active, Saturdays and Sundays are blocked to prevent picking days when college administrative offices are closed.
-4. Click **Add Date Option**.
-5. The option is immediately propagated to all batchmates in real-time.
+### 2.2 Interactive Monthly Calendar Selector
+1. Go to **Admin Control Center** (`/admin`) → **Interactive Date Selector**.
+2. Navigate between **November 2026** and **December 2026**.
+3. **Click on any date:**
+   - **Inactive Valid Dates (&ge; Nov 25):** Clicking immediately focuses the customization form with that date pre-selected.
+   - **Active Ballot Dates:** Displays in bold indigo with live vote counter (`3v`). Clicking activates the **Edit Option** drawer to tweak tags, notes, or recommendation status.
+   - **Dates Prior to Nov 24:** Visually struck through and disabled per college regulations.
 
-### 2.3 Removing a Date Option
-1. Locate the option in the date list under **Manage Date Options**.
-2. Click the **Remove (Trash)** button.
-3. The platform re-assigns or cancels affected ballots, recalculates turnout percentages, and writes an entry into `poll_audit_logs`.
+### 2.3 1-Click Quick Presets
+Admin can batch-populate eligible dates with one click:
+- ⚡ **All Fridays:** Populates Nov 27, Dec 04, and Dec 11 with the `⭐ Recommended (Friday)` tag.
+- ⚡ **End of Nov Weekdays:** Populates Nov 25, 26, 27, and 30.
+- ⚡ **Early Dec Weekdays:** Populates Dec 01, 02, 03, and 04.
+- ⚡ **Recommended Triad:** Sets up the optimal three-date balance (Nov 25, 27, Dec 02).
+
+### 2.4 Customizing Date Badges, Notes & Recommendations
+1. Under **Customize & Add Date Option** (or **Edit Configured Date Option**):
+   - **Date Picker:** Select or confirm the target date (`min="2026-11-25"`).
+   - **Custom Tag / Badge:** Type a custom badge or click a preset chip:
+     - `⭐ Recommended` &bull; `Opening Day` &bull; `Full Staff Available` &bull; `Dean's Clearance` &bull; `Alumni Hangout` &bull; `Less Crowded` &bull; `Backup Date`.
+   - **Administrative Note / Context:** Enter specific instructions (e.g., *"Academic Cell confirmed counter 3 will issue certificates until 4 PM. Photographers pre-booked on library stairs."*). This is displayed on batchmates' voting cards.
+   - **Mark as Recommended Date:** Checkbox toggles a gold star recommendation badge on the student voting ballot.
+2. Click **Add Customized Date to Ballot** (or **Save Option Changes**).
+
+### 2.5 Direct Official Date Selection & Option Management
+- **Select as Official Date:** Each date option has a **"Official"** button enabling the admin to instantly designate it as the final reunion date without waiting for the deadline.
+- **Editing Existing Options:** Modifies labels or notes atomically without affecting existing student votes.
+- **Removing an Option:** Deletes the option with confirmation, archiving the action in `poll_audit_logs`.
 
 ---
 
