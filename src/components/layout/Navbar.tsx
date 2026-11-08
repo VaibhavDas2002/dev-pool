@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getInitials, getAvatarColor } from "@/lib/utils";
+import { getInitials, getAvatarColor, getAvatarStyle } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface NavbarProps {
@@ -143,9 +143,10 @@ export function Navbar({ user }: NavbarProps) {
               {/* User Avatar & Info */}
               <div className="flex items-center gap-2.5">
                 <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-xl font-bold text-xs shadow-inner ${getAvatarColor(
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-bold text-xs shadow-sm ring-1 ring-black/5 ${getAvatarColor(
                     user.full_name
                   )}`}
+                  style={getAvatarStyle(user.full_name)}
                 >
                   {getInitials(user.full_name)}
                 </div>
@@ -201,9 +202,10 @@ export function Navbar({ user }: NavbarProps) {
           <div className="pb-2 pt-1 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div
-                className={`flex h-8 w-8 items-center justify-center rounded-lg font-bold text-xs ${getAvatarColor(
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg font-bold text-xs shadow-sm ring-1 ring-black/5 ${getAvatarColor(
                   user.full_name
                 )}`}
+                style={getAvatarStyle(user.full_name)}
               >
                 {getInitials(user.full_name)}
               </div>

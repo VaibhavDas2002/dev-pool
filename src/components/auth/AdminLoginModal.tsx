@@ -116,7 +116,7 @@ export function AdminLoginModal({ isOpen, onClose }: AdminLoginModalProps) {
                 <Lock className="h-3.5 w-3.5 text-indigo-600" />
                 Password
               </label>
-              <span className="text-[11px] text-slate-400">Default: abcd@1234</span>
+              {/* <span className="text-[11px] text-slate-400">Default: abcd@1234</span> */}
             </div>
 
             <div className="relative">

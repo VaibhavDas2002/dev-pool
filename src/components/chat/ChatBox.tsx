@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ChatMessage, SessionUser } from "@/types";
 import { formatChatTime, formatRelativeTime } from "@/lib/utils/date";
-import { getInitials, getAvatarColor } from "@/lib/utils";
+import { getInitials, getAvatarColor, getAvatarStyle } from "@/lib/utils";
 import { Send, Trash2, ShieldCheck, Smile, MessageSquare, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -168,9 +168,10 @@ export function ChatBox({ currentUser, initialMessages = [], compact = false }: 
               >
                 {!isMe && (
                   <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl font-bold text-[11px] mb-0.5 ${
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl font-bold text-[11px] mb-0.5 shadow-sm ring-1 ring-black/5 ${
                       isConsecutive ? "opacity-0" : getAvatarColor(msg.sender_name || "Friend")
                     }`}
+                    style={isConsecutive ? undefined : getAvatarStyle(msg.sender_name || "Friend")}
                   >
                     {!isConsecutive && getInitials(msg.sender_name || "Friend")}
                   </div>

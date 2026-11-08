@@ -214,7 +214,7 @@ export default function LandingPage() {
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
-                        placeholder="Enter password (abcd@1234)"
+                        placeholder="Enter password (admin@1234)"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required={isAdminMobile}

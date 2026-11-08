@@ -4,7 +4,7 @@ import Link from "next/link";
 import { getSessionUser } from "@/lib/session";
 import { dataService } from "@/lib/data-service";
 import { formatRelativeTime, formatShortDate } from "@/lib/utils/date";
-import { getInitials, getAvatarColor } from "@/lib/utils";
+import { getInitials, getAvatarColor, getAvatarStyle } from "@/lib/utils";
 import { Users, ArrowLeft, CheckCircle2, Clock, ShieldCheck, UserCheck } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,9 +58,10 @@ export default async function MembersPage() {
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-bold text-sm shadow-inner ${getAvatarColor(
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl font-bold text-sm shadow-sm ring-1 ring-black/5 ${getAvatarColor(
                     member.full_name
                   )}`}
+                  style={getAvatarStyle(member.full_name)}
                 >
                   {getInitials(member.full_name)}
                 </div>
