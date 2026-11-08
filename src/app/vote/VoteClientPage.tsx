@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Poll, PollResults, PollOption, Vote } from "@/types";
 import { formatDisplayDate, formatWithDay } from "@/lib/utils/date";
 import { CountdownTimer } from "@/components/dashboard/CountdownTimer";
+import { CalendarView } from "@/components/polling/CalendarView";
 import { 
   ArrowLeft, 
   Calendar as CalendarIcon, 
@@ -147,15 +148,37 @@ export function VoteClientPage({
       )}
 
       {/* Date Options Selection */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900">Choose Your Preferred Date</h2>
-          <p className="text-xs text-slate-500">
-            All selectable dates are scheduled on or after November 25, 2026.
-          </p>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Interactive Month Calendar */}
+        <div className="lg:col-span-5 space-y-3">
+          <CalendarView
+            availableDates={options.map((o) => o.option_date)}
+            selectedDate={currentOption?.option_date || null}
+            leadingDate={results.leading_date || null}
+            isClosed={isClosed || deadlinePassed}
+            onSelectDate={(dateStr) => {
+              const matched = options.find((o) => o.option_date === dateStr);
+              if (matched) setSelectedOptionId(matched.id);
+            }}
+          />
+          <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100 text-xs text-indigo-900 flex items-start gap-2">
+            <Info className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
+            <span>
+              Click on any highlighted date in the calendar or select from the cards on the right.
+            </span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Right Column: Date Cards */}
+        <div className="lg:col-span-7 rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm space-y-6">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Choose Your Preferred Date</h2>
+            <p className="text-xs text-slate-500">
+              All selectable dates are scheduled on or after November 25, 2026.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {options.map((option) => {
             const isChecked = selectedOptionId === option.id;
             const isAlreadyVoted = userVote?.option_id === option.id;
@@ -234,6 +257,7 @@ export function VoteClientPage({
             {userVote ? "Update My Vote" : "Submit Official Vote"}
           </Button>
         </div>
+      </div>
       </div>
 
       {/* Confirmation Modal */}
