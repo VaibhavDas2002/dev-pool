@@ -155,24 +155,36 @@ class CampusReunionStore {
       id: "c0000000-0000-0000-0000-000000000001",
       poll_id: "b0000000-0000-0000-0000-000000000001",
       option_date: "2026-11-25",
+      label: "Opening Day",
+      note: "First day certificates are issued at the counter",
+      is_recommended: false,
       created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
     },
     {
       id: "c0000000-0000-0000-0000-000000000002",
       poll_id: "b0000000-0000-0000-0000-000000000001",
       option_date: "2026-11-27",
+      label: "⭐ Recommended (Friday)",
+      note: "Full counter staffing & alumni hangout afterwards",
+      is_recommended: true,
       created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
     },
     {
       id: "c0000000-0000-0000-0000-000000000003",
       poll_id: "b0000000-0000-0000-0000-000000000001",
       option_date: "2026-11-30",
+      label: "Month End Monday",
+      note: "Less rush, easy parking on campus",
+      is_recommended: false,
       created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
     },
     {
       id: "c0000000-0000-0000-0000-000000000004",
       poll_id: "b0000000-0000-0000-0000-000000000001",
       option_date: "2026-12-02",
+      label: "December Buffer",
+      note: "Backup date for out-of-station batchmates",
+      is_recommended: false,
       created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
     },
   ];
@@ -420,6 +432,9 @@ class CampusReunionStore {
       return {
         option_id: opt.id,
         option_date: opt.option_date,
+        label: opt.label,
+        note: opt.note,
+        is_recommended: opt.is_recommended,
         vote_count: count,
         percentage,
       };
@@ -464,7 +479,13 @@ class CampusReunionStore {
   }
 
   // ==================== ADMIN ACTIONS ====================
-  public addPollOption(pollId: string, optionDate: string): PollOption {
+  public addPollOption(
+    pollId: string,
+    optionDate: string,
+    label?: string | null,
+    note?: string | null,
+    isRecommended?: boolean
+  ): PollOption {
     if (optionDate < "2026-11-25") {
       throw new Error("Date must be after November 24, 2026");
     }
@@ -476,10 +497,100 @@ class CampusReunionStore {
       id: "po_" + Math.random().toString(36).substring(2, 9),
       poll_id: pollId,
       option_date: optionDate,
+      label: label?.trim() || null,
+      note: note?.trim() || null,
+      is_recommended: !!isRecommended,
       created_at: new Date().toISOString(),
     };
     this.pollOptions.push(newOption);
     return newOption;
+  }
+
+  public updatePollOption(
+    optionId: string,
+    updates: {
+      option_date?: string;
+      label?: string | null;
+      note?: string | null;
+      is_recommended?: boolean;
+    },
+    actorId?: string
+  ): PollOption {
+    const opt = this.pollOptions.find((po) => po.id === optionId);
+    if (!opt) throw new Error("Date option not found");
+
+    if (updates.option_date !== undefined) {
+      if (updates.option_date < "2026-11-25") {
+        throw new Error("Date must be after November 24, 2026");
+      }
+      const duplicate = this.pollOptions.some(
+        (po) => po.poll_id === opt.poll_id && po.id !== optionId && po.option_date === updates.option_date
+      );
+      if (duplicate) {
+        throw new Error("Another option already exists for this date");
+      }
+      opt.option_date = updates.option_date;
+    }
+
+    if (updates.label !== undefined) {
+      opt.label = updates.label?.trim() || null;
+    }
+    if (updates.note !== undefined) {
+      opt.note = updates.note?.trim() || null;
+    }
+    if (updates.is_recommended !== undefined) {
+      opt.is_recommended = updates.is_recommended;
+    }
+
+    if (actorId) {
+      this.auditLogs.push({
+        id: "aud_" + Math.random().toString(36).substring(2, 9),
+        poll_id: opt.poll_id,
+        actor_id: actorId,
+        action: "UPDATE_POLL_OPTION",
+        old_value: null,
+        new_value: updates,
+        created_at: new Date().toISOString(),
+      });
+    }
+
+    return opt;
+  }
+
+  public batchSyncDateOptions(pollId: string, dates: string[], actorId?: string): PollOption[] {
+    for (const d of dates) {
+      if (d < "2026-11-25") {
+        throw new Error(`All dates must be after November 24, 2026 (${d} is invalid)`);
+      }
+    }
+
+    const existing = this.pollOptions.filter((po) => po.poll_id === pollId);
+    const existingDateMap = new Map(existing.map((po) => [po.option_date, po]));
+    const targetSet = new Set(dates);
+
+    // Add new ones
+    for (const d of dates) {
+      if (!existingDateMap.has(d)) {
+        this.pollOptions.push({
+          id: "po_" + Math.random().toString(36).substring(2, 9),
+          poll_id: pollId,
+          option_date: d,
+          label: null,
+          note: null,
+          is_recommended: false,
+          created_at: new Date().toISOString(),
+        });
+      }
+    }
+
+    // Remove ones not in dates
+    for (const po of existing) {
+      if (!targetSet.has(po.option_date)) {
+        this.removePollOption(po.id, actorId || "admin");
+      }
+    }
+
+    return this.getPollOptions(pollId);
   }
 
   public removePollOption(optionId: string, actorId: string): { success: boolean; affectedVotes: number } {

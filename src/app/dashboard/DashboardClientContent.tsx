@@ -168,6 +168,9 @@ export function DashboardClientContent({
                   pollId={poll.id}
                   optionId={opt.id}
                   dateStr={opt.option_date}
+                  label={opt.label || optResult?.label}
+                  note={opt.note || optResult?.note}
+                  isRecommended={opt.is_recommended ?? optResult?.is_recommended}
                   voteCount={voteCount}
                   percentage={percentage}
                   isSelected={isSelected}

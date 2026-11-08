@@ -50,9 +50,42 @@ export const dateOptionSchema = z.object({
     .refine((dateStr) => dateStr >= MIN_POLL_DATE, {
       message: `Date must be after November 24, 2026 (earliest is ${MIN_POLL_DATE}).`,
     }),
+  label: z.string().trim().max(60).optional().nullable(),
+  note: z.string().trim().max(250).optional().nullable(),
+  is_recommended: z.boolean().optional(),
 });
 
 export type DateOptionInput = z.infer<typeof dateOptionSchema>;
+
+export const updateDateOptionSchema = z.object({
+  option_id: z.string().min(1),
+  option_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .refine((dateStr) => dateStr >= MIN_POLL_DATE, {
+      message: `Date must be after November 24, 2026.`,
+    })
+    .optional(),
+  label: z.string().trim().max(60).optional().nullable(),
+  note: z.string().trim().max(250).optional().nullable(),
+  is_recommended: z.boolean().optional(),
+});
+
+export type UpdateDateOptionInput = z.infer<typeof updateDateOptionSchema>;
+
+export const batchSyncDateOptionsSchema = z.object({
+  poll_id: z.string().uuid(),
+  dates: z.array(
+    z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .refine((dateStr) => dateStr >= MIN_POLL_DATE, {
+        message: `Date must be after November 24, 2026.`,
+      })
+  ),
+});
+
+export type BatchSyncDateOptionsInput = z.infer<typeof batchSyncDateOptionsSchema>;
 
 export const chatMessageSchema = z.object({
   message: z

@@ -14,7 +14,8 @@ import {
   Info, 
   Clock, 
   Vote as VoteIcon,
-  AlertCircle 
+  AlertCircle,
+  Star 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -184,6 +185,9 @@ export function VoteClientPage({
             const isAlreadyVoted = userVote?.option_id === option.id;
             const optResult = results.options.find((r) => r.option_id === option.id);
             const votesCount = optResult?.vote_count || 0;
+            const isRecommended = option.is_recommended ?? optResult?.is_recommended;
+            const label = option.label || optResult?.label;
+            const note = option.note || optResult?.note;
 
             return (
               <div
@@ -192,40 +196,66 @@ export function VoteClientPage({
                 className={`relative flex flex-col justify-between p-5 rounded-2xl border-2 cursor-pointer transition-all ${
                   isChecked
                     ? "border-indigo-600 bg-indigo-50/50 shadow-sm"
+                    : isRecommended
+                    ? "border-amber-200/80 bg-gradient-to-b from-amber-50/20 to-white hover:border-amber-300"
                     : "border-slate-200 hover:border-indigo-300 hover:bg-slate-50/60"
                 } ${isClosed ? "cursor-not-allowed opacity-80" : ""}`}
               >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
-                        isChecked
-                          ? "border-indigo-600 bg-indigo-600 text-white"
-                          : "border-slate-300 bg-white"
-                      }`}
-                    >
-                      {isChecked && <CheckCircle2 className="h-4 w-4" />}
+                <div>
+                  {/* Badges row */}
+                  <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
+                    {isRecommended && (
+                      <Badge className="bg-amber-50 text-amber-900 border border-amber-300/80 text-[10px] gap-1 font-bold py-0.5">
+                        <Star className="h-2.5 w-2.5 fill-amber-500 text-amber-600" />
+                        Recommended
+                      </Badge>
+                    )}
+                    {label && (
+                      <Badge variant="outline" className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border-indigo-200 py-0.5">
+                        {label}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
+                          isChecked
+                            ? "border-indigo-600 bg-indigo-600 text-white"
+                            : "border-slate-300 bg-white"
+                        }`}
+                      >
+                        {isChecked && <CheckCircle2 className="h-4 w-4" />}
+                      </div>
+                      <div>
+                        <span className="text-lg font-black text-slate-900 block">
+                          {formatDisplayDate(option.option_date)}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-500">
+                          {formatWithDay(option.option_date).split(",")[0]}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-lg font-black text-slate-900 block">
-                        {formatDisplayDate(option.option_date)}
-                      </span>
-                      <span className="text-xs font-semibold text-slate-500">
-                        {formatWithDay(option.option_date).split(",")[0]}
+
+                    <div className="flex flex-col items-end gap-1">
+                      {isAlreadyVoted && (
+                        <Badge variant="default" className="text-[10px] bg-indigo-600">
+                          Current Selection
+                        </Badge>
+                      )}
+                      <span className="text-xs font-bold text-slate-500">
+                        {votesCount} {votesCount === 1 ? "vote" : "votes"}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end gap-1">
-                    {isAlreadyVoted && (
-                      <Badge variant="default" className="text-[10px] bg-indigo-600">
-                        Current Selection
-                      </Badge>
-                    )}
-                    <span className="text-xs font-bold text-slate-500">
-                      {votesCount} {votesCount === 1 ? "vote" : "votes"}
-                    </span>
-                  </div>
+                  {note && (
+                    <div className="mb-3 rounded-xl bg-slate-50 border border-slate-200/70 p-2.5 text-[11px] text-slate-600 flex items-start gap-1.5">
+                      <span className="text-indigo-600 font-bold shrink-0">💡</span>
+                      <span>{note}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">

@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CreatePollModal } from "@/components/admin/CreatePollModal";
+import { AdminDateCustomizer } from "@/components/admin/AdminDateCustomizer";
 import { toast } from "sonner";
 
 interface AdminClientPageProps {
@@ -54,9 +55,6 @@ export function AdminClientPage({
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Form states
-  const [newOptionDate, setNewOptionDate] = useState("");
-  const [isAddingOption, setIsAddingOption] = useState(false);
   const [pollStatus, setPollStatus] = useState(poll.status);
   const [votingDeadline, setVotingDeadline] = useState(
     poll.voting_deadline ? poll.voting_deadline.substring(0, 16) : ""
@@ -68,78 +66,6 @@ export function AdminClientPage({
   const [tieSelectedDate, setTieSelectedDate] = useState("");
   const [tieNote, setTieNote] = useState("");
   const [isResolvingTie, setIsResolvingTie] = useState(false);
-
-  // Add date option
-  const handleAddOption = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newOptionDate) return;
-
-    if (newOptionDate < "2026-11-25") {
-      toast.error("Date must be after November 24, 2026 (earliest is Nov 25, 2026).");
-      return;
-    }
-
-    if (disableWeekends) {
-      const day = new Date(newOptionDate).getDay();
-      if (day === 0 || day === 6) {
-        toast.error("Weekends disabled: Administrative counters and Registrar office are closed on Saturday and Sunday.");
-        return;
-      }
-    }
-
-    try {
-      setIsAddingOption(true);
-      const res = await fetch("/api/admin/poll", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "ADD_OPTION",
-          poll_id: poll.id,
-          option_date: newOptionDate,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to add date");
-      }
-
-      toast.success(`Date option ${newOptionDate} added!`);
-      setOptions((prev) => [...prev, data.option].sort((a, b) => a.option_date.localeCompare(b.option_date)));
-      setNewOptionDate("");
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Error adding option");
-    } finally {
-      setIsAddingOption(false);
-    }
-  };
-
-  // Remove option
-  const handleRemoveOption = async (optionId: string, optionDate: string) => {
-    if (!confirm(`Are you sure you want to remove ${formatDisplayDate(optionDate)}? Any existing votes on this date will be deleted.`)) {
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/admin/poll", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "REMOVE_OPTION",
-          poll_id: poll.id,
-          option_id: optionId,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to remove option");
-
-      toast.success("Date option removed");
-      setOptions((prev) => prev.filter((o) => o.id !== optionId));
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Error removing date");
-    }
-  };
 
   // Update Config
   const handleSaveConfig = async () => {
@@ -350,9 +276,9 @@ export function AdminClientPage({
       )}
 
       {/* Grid: Poll Configuration & Date Options */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Poll Configuration */}
-        <div className="lg:col-span-6 space-y-6">
+        <div className="lg:col-span-5 space-y-6">
           <Card className="rounded-3xl border-slate-200 bg-white shadow-sm">
             <CardHeader className="p-6 pb-4 border-b border-slate-100">
               <CardTitle className="text-lg font-bold">Poll Status & Deadline</CardTitle>
@@ -434,101 +360,20 @@ export function AdminClientPage({
           </Card>
         </div>
 
-        {/* Right Column: Manage Date Options */}
-        <div className="lg:col-span-6 space-y-6">
-          <Card className="rounded-3xl border-slate-200 bg-white shadow-sm">
-            <CardHeader className="p-6 pb-4 border-b border-slate-100">
-              <CardTitle className="text-lg font-bold">Manage Date Options</CardTitle>
-              <CardDescription className="text-xs">
-                Add or remove date options. Must be strictly after November 24, 2026.
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="p-6 space-y-5">
-              {/* Weekend Policy Toggle */}
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div>
-                  <span className="text-xs font-bold text-slate-800 block">
-                    Disable Weekends (Sat/Sun)
-                  </span>
-                  <span className="text-[11px] text-slate-500">
-                    Academic counters are closed on weekends
-                  </span>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={disableWeekends}
-                    onChange={(e) => setDisableWeekends(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                </label>
-              </div>
-
-              {/* Add Date Form */}
-              <form onSubmit={handleAddOption} className="flex gap-2">
-                <input
-                  type="date"
-                  min="2026-11-25"
-                  className="flex-1 rounded-xl border border-slate-300 p-2.5 text-sm bg-white font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-600"
-                  value={newOptionDate}
-                  onChange={(e) => setNewOptionDate(e.target.value)}
-                  required
-                />
-                <Button
-                  type="submit"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-xs px-4"
-                  isLoading={isAddingOption}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Date
-                </Button>
-              </form>
-
-              {/* Existing Options List */}
-              <div className="space-y-2">
-                {options.map((opt) => {
-                  const optResult = results.options.find((r) => r.option_id === opt.id);
-                  const votes = optResult?.vote_count || 0;
-
-                  return (
-                    <div
-                      key={opt.id}
-                      className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Calendar className="h-4 w-4 text-indigo-600" />
-                        <div>
-                          <p className="font-bold text-sm text-slate-900">
-                            {formatDisplayDate(opt.option_date)}
-                          </p>
-                          <p className="text-[11px] text-slate-400">
-                            {formatWithDay(opt.option_date).split(",")[0]}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <Badge variant="outline" className="text-xs font-bold">
-                          {votes} {votes === 1 ? "vote" : "votes"}
-                        </Badge>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveOption(opt.id, opt.option_date)}
-                          className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                          title="Remove option"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Right Column: Manage & Customize Date Options */}
+        <div className="lg:col-span-7 space-y-6">
+          <AdminDateCustomizer
+            pollId={poll.id}
+            pollStatus={poll.status}
+            options={options}
+            results={results}
+            disableWeekends={disableWeekends}
+            onDisableWeekendsChange={setDisableWeekends}
+            onOptionsChange={(newOptions) => setOptions(newOptions)}
+            onSelectOfficialDate={async (dateStr) => {
+              await handleFinalize(dateStr);
+            }}
+          />
         </div>
       </div>
 

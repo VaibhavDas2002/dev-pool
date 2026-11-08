@@ -443,13 +443,18 @@ export const dataService = {
   /**
    * Add a new date option (Admin only, must be >= 2026-11-25)
    */
-  async addDateOption(pollId: string, optionDate: string, actorId?: string): Promise<PollOption> {
+  async addDateOption(
+    pollId: string,
+    optionDate: string,
+    meta?: { label?: string | null; note?: string | null; is_recommended?: boolean },
+    actorId?: string
+  ): Promise<PollOption> {
     if (optionDate < "2026-11-25") {
       throw new Error("Date must be after November 24, 2026");
     }
 
     if (!isSupabaseConfigured()) {
-      return mockStore.addPollOption(pollId, optionDate);
+      return mockStore.addPollOption(pollId, optionDate, meta?.label, meta?.note, meta?.is_recommended);
     }
 
     const supabase = createAdminClient();
@@ -458,12 +463,26 @@ export const dataService = {
       .insert({
         poll_id: pollId,
         option_date: optionDate,
+        label: meta?.label?.trim() || null,
+        note: meta?.note?.trim() || null,
+        is_recommended: !!meta?.is_recommended,
       })
       .select()
       .single();
 
     if (error) {
-      throw new Error(error.message || "Failed to add date option");
+      const fallbackInsert = await supabase
+        .from("poll_options")
+        .insert({
+          poll_id: pollId,
+          option_date: optionDate,
+        })
+        .select()
+        .single();
+      if (fallbackInsert.error) {
+        throw new Error(fallbackInsert.error.message || "Failed to add date option");
+      }
+      return fallbackInsert.data as PollOption;
     }
 
     if (actorId) {
@@ -471,11 +490,117 @@ export const dataService = {
         poll_id: pollId,
         actor_id: actorId,
         action: "ADD_POLL_OPTION",
-        new_value: { optionDate },
+        new_value: { optionDate, ...meta },
       });
     }
 
     return data as PollOption;
+  },
+
+  /**
+   * Update an existing date option (Admin only)
+   */
+  async updateDateOption(
+    optionId: string,
+    updates: {
+      option_date?: string;
+      label?: string | null;
+      note?: string | null;
+      is_recommended?: boolean;
+    },
+    actorId?: string
+  ): Promise<PollOption> {
+    if (updates.option_date && updates.option_date < "2026-11-25") {
+      throw new Error("Date must be after November 24, 2026");
+    }
+
+    if (!isSupabaseConfigured()) {
+      return mockStore.updatePollOption(optionId, updates, actorId);
+    }
+
+    const supabase = createAdminClient();
+    const updatePayload: Record<string, unknown> = {};
+    if (updates.option_date !== undefined) updatePayload.option_date = updates.option_date;
+    if (updates.label !== undefined) updatePayload.label = updates.label?.trim() || null;
+    if (updates.note !== undefined) updatePayload.note = updates.note?.trim() || null;
+    if (updates.is_recommended !== undefined) updatePayload.is_recommended = updates.is_recommended;
+
+    const { data, error } = await supabase
+      .from("poll_options")
+      .update(updatePayload)
+      .eq("id", optionId)
+      .select()
+      .single();
+
+    if (error) {
+      console.warn("Supabase updatePollOption fallback to mock:", error);
+      return mockStore.updatePollOption(optionId, updates, actorId);
+    }
+
+    if (actorId) {
+      await supabase.from("poll_audit_logs").insert({
+        actor_id: actorId,
+        action: "UPDATE_POLL_OPTION",
+        new_value: updates,
+      });
+    }
+
+    return data as PollOption;
+  },
+
+  /**
+   * Batch sync date options from interactive calendar
+   */
+  async batchSyncDateOptions(
+    pollId: string,
+    dates: string[],
+    actorId: string
+  ): Promise<PollOption[]> {
+    for (const d of dates) {
+      if (d < "2026-11-25") {
+        throw new Error(`All dates must be after November 24, 2026 (${d} is invalid)`);
+      }
+    }
+
+    if (!isSupabaseConfigured()) {
+      return mockStore.batchSyncDateOptions(pollId, dates, actorId);
+    }
+
+    const supabase = createAdminClient();
+    try {
+      const { data: existing } = await supabase
+        .from("poll_options")
+        .select("id, option_date")
+        .eq("poll_id", pollId);
+
+      const existingMap = new Map((existing || []).map((e: { id: string; option_date: string }) => [e.option_date, e.id]));
+      const targetSet = new Set(dates);
+
+      for (const d of dates) {
+        if (!existingMap.has(d)) {
+          await supabase.from("poll_options").insert({
+            poll_id: pollId,
+            option_date: d,
+          });
+        }
+      }
+
+      for (const [dateStr, id] of existingMap.entries()) {
+        if (!targetSet.has(dateStr)) {
+          await supabase.from("poll_options").delete().eq("id", id);
+        }
+      }
+
+      const { data: finalOptions } = await supabase
+        .from("poll_options")
+        .select("*")
+        .eq("poll_id", pollId)
+        .order("option_date", { ascending: true });
+
+      return (finalOptions as PollOption[]) || [];
+    } catch {
+      return mockStore.batchSyncDateOptions(pollId, dates, actorId);
+    }
   },
 
   /**

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { formatDisplayDate, formatWithDay } from "@/lib/utils/date";
-import { CheckCircle2, Trophy, Calendar, ArrowRight, Loader2 } from "lucide-react";
+import { CheckCircle2, Trophy, Calendar, ArrowRight, Loader2, Star, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -11,6 +11,9 @@ interface DateOptionCardProps {
   pollId: string;
   optionId: string;
   dateStr: string;
+  label?: string | null;
+  note?: string | null;
+  isRecommended?: boolean;
   voteCount: number;
   percentage: number;
   isSelected: boolean;
@@ -23,6 +26,9 @@ export function DateOptionCard({
   pollId,
   optionId,
   dateStr,
+  label,
+  note,
+  isRecommended,
   voteCount,
   percentage,
   isSelected,
@@ -50,6 +56,8 @@ export function DateOptionCard({
           ? "border-indigo-600 bg-indigo-50/40 ring-2 ring-indigo-600/30"
           : isLeading
           ? "border-amber-300 bg-amber-50/20 hover:border-amber-400"
+          : isRecommended
+          ? "border-amber-200/80 bg-gradient-to-b from-amber-50/30 to-white hover:border-amber-300"
           : "border-slate-200/90 bg-white hover:border-indigo-200 hover:shadow-md"
       }`}
     >
@@ -69,6 +77,17 @@ export function DateOptionCard({
                 Current Leader
               </Badge>
             )}
+            {isRecommended && (
+              <Badge className="bg-amber-50 text-amber-900 border border-amber-300/80 text-[10px] gap-1 font-bold py-0.5">
+                <Star className="h-2.5 w-2.5 fill-amber-500 text-amber-600" />
+                Recommended
+              </Badge>
+            )}
+            {label && (
+              <Badge variant="outline" className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border-indigo-200 py-0.5">
+                {label}
+              </Badge>
+            )}
           </div>
 
           <span className="text-xs font-semibold text-slate-500">
@@ -77,15 +96,23 @@ export function DateOptionCard({
         </div>
 
         {/* Date Display */}
-        <div className="space-y-0.5 mb-4">
+        <div className="space-y-0.5 mb-3">
           <h4 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <Calendar className={`h-5 w-5 ${isSelected ? "text-indigo-600" : "text-slate-400"}`} />
+            <Calendar className={`h-5 w-5 ${isSelected ? "text-indigo-600" : isRecommended ? "text-amber-500" : "text-slate-400"}`} />
             {formatDisplayDate(dateStr)}
           </h4>
           <p className="text-xs font-medium text-slate-500">
             {formatWithDay(dateStr).split(",")[0]} &bull; Post Nov 24, 2026
           </p>
         </div>
+
+        {/* Admin Note if available */}
+        {note && (
+          <div className="mb-3.5 rounded-xl bg-slate-50 border border-slate-200/80 p-2.5 text-[11px] text-slate-600 flex items-start gap-1.5 leading-relaxed">
+            <span className="text-indigo-600 font-bold shrink-0">💡</span>
+            <span>{note}</span>
+          </div>
+        )}
 
         {/* Horizontal Progress Bar */}
         <div className="space-y-1.5 mb-4">

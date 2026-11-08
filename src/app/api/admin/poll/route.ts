@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { dataService } from "@/lib/data-service";
-import { dateOptionSchema, tieResolutionSchema, createPollSchema } from "@/lib/validations";
+import {
+  dateOptionSchema,
+  updateDateOptionSchema,
+  batchSyncDateOptionsSchema,
+  tieResolutionSchema,
+  createPollSchema,
+} from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,8 +34,48 @@ export async function POST(req: NextRequest) {
       if (!validation.success) {
         return NextResponse.json({ error: validation.error.errors[0]?.message }, { status: 400 });
       }
-      const newOption = await dataService.addDateOption(validation.data.poll_id, validation.data.option_date, user.id);
+      const newOption = await dataService.addDateOption(
+        validation.data.poll_id,
+        validation.data.option_date,
+        {
+          label: validation.data.label,
+          note: validation.data.note,
+          is_recommended: validation.data.is_recommended,
+        },
+        user.id
+      );
       return NextResponse.json({ success: true, option: newOption });
+    }
+
+    if (action === "UPDATE_OPTION") {
+      const validation = updateDateOptionSchema.safeParse(body);
+      if (!validation.success) {
+        return NextResponse.json({ error: validation.error.errors[0]?.message }, { status: 400 });
+      }
+      const updated = await dataService.updateDateOption(
+        validation.data.option_id,
+        {
+          option_date: validation.data.option_date,
+          label: validation.data.label,
+          note: validation.data.note,
+          is_recommended: validation.data.is_recommended,
+        },
+        user.id
+      );
+      return NextResponse.json({ success: true, option: updated });
+    }
+
+    if (action === "BATCH_SYNC_OPTIONS") {
+      const validation = batchSyncDateOptionsSchema.safeParse(body);
+      if (!validation.success) {
+        return NextResponse.json({ error: validation.error.errors[0]?.message }, { status: 400 });
+      }
+      const options = await dataService.batchSyncDateOptions(
+        validation.data.poll_id,
+        validation.data.dates,
+        user.id
+      );
+      return NextResponse.json({ success: true, options });
     }
 
     if (action === "REMOVE_OPTION") {

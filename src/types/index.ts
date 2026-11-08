@@ -42,6 +42,9 @@ export interface PollOption {
   id: string;
   poll_id: string;
   option_date: string; // YYYY-MM-DD
+  label?: string | null;
+  note?: string | null;
+  is_recommended?: boolean;
   created_at: string;
 }
 
@@ -57,6 +60,9 @@ export interface Vote {
 export interface OptionResult {
   option_id: string;
   option_date: string;
+  label?: string | null;
+  note?: string | null;
+  is_recommended?: boolean;
   vote_count: number;
   percentage: number;
 }
