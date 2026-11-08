@@ -22,6 +22,16 @@ export const joinSchema = z.object({
 
 export type JoinInput = z.infer<typeof joinSchema>;
 
+export const adminLoginSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .email({ message: "Please enter a valid administrator email address." }),
+  password: z.string().min(1, { message: "Password is required." }),
+});
+
+export type AdminLoginInput = z.infer<typeof adminLoginSchema>;
+
 export const voteSchema = z.object({
   poll_id: z.string().uuid({ message: "Invalid poll ID." }),
   option_id: z.string().uuid({ message: "Invalid option selected." }),

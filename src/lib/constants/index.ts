@@ -8,5 +8,6 @@ export const DEFAULT_POLL_ID = "b0000000-0000-0000-0000-000000000001";
 
 // Designated Admin Credentials
 export const DEMO_ADMIN_MOBILE = "6297977842";
-export const DEMO_ADMIN_NAME = "Vaibhav Das (Class Rep)";
+export const DEMO_ADMIN_NAME = "Vaibhav Das";
 export const DEMO_ADMIN_PASSWORD = "abcd@1234";
+export const DEMO_ADMIN_EMAIL = "djvaibhav900@gmail.com";

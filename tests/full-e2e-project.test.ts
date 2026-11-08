@@ -1,15 +1,37 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { dataService } from "@/lib/data-service";
 import { mockStore } from "@/lib/supabase/mock-store";
-import { joinSchema, dateOptionSchema, chatMessageSchema } from "@/lib/validations";
+import { joinSchema, adminLoginSchema, dateOptionSchema, chatMessageSchema } from "@/lib/validations";
 import { isEligibleReunionDate } from "@/lib/utils/date";
 
 describe("Campus Reunion Poll — Full Project End-to-End Test Suite", () => {
   const POLL_ID = "b0000000-0000-0000-0000-000000000001";
   const ADMIN_MOBILE = "6297977842";
+  const ADMIN_EMAIL = "djvaibhav900@gmail.com";
   const ADMIN_PASSWORD = "abcd@1234";
 
   describe("1. Authentication & Role Enforcement", () => {
+    it("Validates Admin Email & Password login schema (djvaibhav900@gmail.com / abcd@1234)", () => {
+      const validPayload = {
+        email: ADMIN_EMAIL,
+        password: ADMIN_PASSWORD,
+      };
+      const parsed = adminLoginSchema.safeParse(validPayload);
+      expect(parsed.success).toBe(true);
+
+      const invalidEmail = adminLoginSchema.safeParse({
+        email: "not-an-email",
+        password: ADMIN_PASSWORD,
+      });
+      expect(invalidEmail.success).toBe(false);
+
+      const missingPassword = adminLoginSchema.safeParse({
+        email: ADMIN_EMAIL,
+        password: "",
+      });
+      expect(missingPassword.success).toBe(false);
+    });
+
     it("Authenticates Admin (Vaibhav Das) with correct mobile and password", async () => {
       // 1. Validate payload
       const validAdminPayload = {

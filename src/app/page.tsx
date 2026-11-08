@@ -6,8 +6,8 @@ import { GraduationCap, Users, Shield, ArrowRight, Sparkles, CheckCircle2, Lock,
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { AdminLoginModal } from "@/components/auth/AdminLoginModal";
 import { toast } from "sonner";
-import { DEMO_ADMIN_MOBILE, DEMO_ADMIN_NAME, DEMO_ADMIN_PASSWORD } from "@/lib/constants";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -17,6 +17,7 @@ export default function LandingPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
   const cleanMobile = mobileNumber.replace(/\D/g, "");
   const isAdminMobile = cleanMobile === "6297977842";
@@ -31,7 +32,7 @@ export default function LandingPage() {
     }
 
     if (!/^[6-9]\d{9}$/.test(cleanMobile)) {
-      setErrorMsg("Please enter a valid 10-digit Indian mobile number (e.g., 6297977842).");
+      setErrorMsg("Please enter a valid 10-digit Indian mobile number (e.g., 9876543210).");
       return;
     }
 
@@ -58,7 +59,7 @@ export default function LandingPage() {
       }
 
       toast.success(`Welcome ${data.user.full_name}! 🎓`);
-      router.push("/dashboard");
+      router.push(data.redirect || "/dashboard");
       router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
@@ -69,16 +70,21 @@ export default function LandingPage() {
     }
   };
 
-  const setPresetUser = (name: string, phone: string, pass?: string) => {
-    setFullName(name);
-    setMobileNumber(phone);
-    if (pass) setPassword(pass);
-    else setPassword("");
-    setErrorMsg("");
-  };
-
   return (
     <div className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-indigo-50/60 via-slate-50 to-white">
+      {/* Corner Admin Login Button */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-8 z-20">
+        <button
+          type="button"
+          onClick={() => setIsAdminModalOpen(true)}
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/95 hover:bg-white text-slate-700 hover:text-indigo-600 border border-slate-200/90 shadow-sm hover:shadow-md backdrop-blur-md transition-all hover:scale-105 active:scale-95"
+          title="Class Representative Administrator Login"
+        >
+          <Shield className="h-3.5 w-3.5 text-amber-500" />
+          <span>Admin Login</span>
+        </button>
+      </div>
+
       {/* Decorative background blobs */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-indigo-200/40 via-violet-200/30 to-amber-200/20 blur-3xl pointer-events-none rounded-full" />
 
@@ -121,21 +127,35 @@ export default function LandingPage() {
 
           <div className="flex items-center justify-center lg:justify-start gap-2 text-xs font-medium text-slate-500">
             <Users className="h-4 w-4 text-indigo-600" />
-            <span>15+ batchmates already participated in polling</span>
+            <span>15+ batchmates already participating in polling</span>
           </div>
         </div>
 
         {/* Right Column: Simple Onboarding Card */}
         <div className="lg:col-span-5">
           <Card className="rounded-3xl border-slate-200/80 shadow-xl bg-white/95 backdrop-blur-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md mb-2 shadow-inner">
-                <GraduationCap className="h-6 w-6 text-white" />
+            <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-inner">
+                    <GraduationCap className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold tracking-tight">Join the Reunion</h2>
+                    <p className="text-xs text-indigo-100">B.Tech Batchmates</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsAdminModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/15 hover:bg-white/25 text-white border border-white/20 transition-colors shadow-2xs"
+                  title="Admin Portal Login"
+                >
+                  <Shield className="h-3 w-3 text-amber-300" />
+                  <span>Admin</span>
+                </button>
               </div>
-              <h2 className="text-xl font-bold tracking-tight">Join the Reunion</h2>
-              <p className="text-xs text-indigo-100 mt-1">
-                Enter your details to cast your vote & join the group chat
-              </p>
             </div>
 
             <CardContent className="p-6">
@@ -145,7 +165,7 @@ export default function LandingPage() {
                     Your Full Name
                   </label>
                   <Input
-                    placeholder="e.g., Vaibhav Das"
+                    placeholder="e.g., Rahul Das"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
@@ -164,7 +184,7 @@ export default function LandingPage() {
                     </span>
                     <Input
                       type="tel"
-                      placeholder="6297977842"
+                      placeholder="9876543210"
                       className="pl-12"
                       value={mobileNumber}
                       onChange={(e) => setMobileNumber(e.target.value)}
@@ -178,7 +198,7 @@ export default function LandingPage() {
                   </p>
                 </div>
 
-                {/* Conditional Admin Password Field */}
+                {/* Conditional Admin Password Field if Admin phone is entered */}
                 {isAdminMobile && (
                   <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3.5 space-y-2 animate-in fade-in">
                     <div className="flex items-center justify-between">
@@ -229,34 +249,30 @@ export default function LandingPage() {
                 </Button>
               </form>
 
-              {/* Demo Quick Selectors */}
-              <div className="mt-6 pt-5 border-t border-slate-100">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 text-center">
-                  Quick Demo Profiles
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPresetUser("Vaibhav Das", "6297977842", "abcd@1234")}
-                    className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold border border-amber-200/80 transition-colors text-left"
-                  >
-                    👑 Vaibhav Das (Admin)
-                    <span className="block text-[10px] text-amber-700 font-normal">6297977842</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPresetUser("Priya Sharma", "9876543211")}
-                    className="p-2.5 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-semibold border border-violet-200/60 transition-colors text-left"
-                  >
-                    🎓 Priya (Member)
-                    <span className="block text-[10px] text-violet-500 font-normal">9876543211</span>
-                  </button>
-                </div>
+              {/* Bottom Info Bar without Quick Profiles */}
+              <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  No password required for batchmates
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsAdminModalOpen(true)}
+                  className="font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                >
+                  Admin Login →
+                </button>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Admin Email & Password Login Dialog */}
+      <AdminLoginModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+      />
     </div>
   );
 }
