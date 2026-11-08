@@ -41,6 +41,13 @@
 
 ---
 
+## 📖 Documentation & Guides
+
+- 🛡️ **[Administrator Guide (ADMIN_GUIDE.md)](./ADMIN_GUIDE.md):** Complete guide for the Class Representative (Vaibhav Das) covering email & password login (`djvaibhav900@gmail.com` / `abcd@1234`), date option controls, weekend policy toggle, deadline management, tie resolution with rationale notes, and chat moderation.
+- 🎓 **[Batchmate User Guide (USER_GUIDE.md)](./USER_GUIDE.md):** Step-by-step instructions for graduating students on password-free joining, casting and changing votes, viewing live standings, participating in real-time group chat, checking the certificate collection checklist, and installing as a mobile app.
+
+---
+
 ## 🚀 Technology Stack
 
 - **Framework:** [Next.js](https://nextjs.org/) (App Router, React 19, TypeScript)
