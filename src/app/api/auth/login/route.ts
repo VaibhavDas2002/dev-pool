@@ -15,7 +15,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { full_name, mobile_number } = validation.data;
+    const { full_name, mobile_number, password } = validation.data;
+
+    // Admin password authentication check
+    const isAdminMobile = mobile_number === "6297977842" || mobile_number === (process.env.INITIAL_ADMIN_MOBILE || "6297977842");
+    if (isAdminMobile) {
+      const requiredPassword = process.env.ADMIN_PASSWORD || "abcd@1234";
+      if (!password || password !== requiredPassword) {
+        return NextResponse.json(
+          { error: "Incorrect administrator password for Vaibhav Das." },
+          { status: 401 }
+        );
+      }
+    }
 
     // Create or retrieve profile
     const profile = await dataService.findOrCreateProfile(full_name, mobile_number);

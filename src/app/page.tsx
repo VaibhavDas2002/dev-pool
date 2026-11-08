@@ -2,32 +2,41 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { GraduationCap, Users, Shield, ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
+import { GraduationCap, Users, Shield, ArrowRight, Sparkles, CheckCircle2, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { DEMO_ADMIN_MOBILE } from "@/lib/constants";
+import { DEMO_ADMIN_MOBILE, DEMO_ADMIN_NAME, DEMO_ADMIN_PASSWORD } from "@/lib/constants";
 
 export default function LandingPage() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const cleanMobile = mobileNumber.replace(/\D/g, "");
+  const isAdminMobile = cleanMobile === "6297977842";
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
-    const cleanMobile = mobileNumber.replace(/\D/g, "");
     if (!fullName.trim() || fullName.trim().length < 2) {
       setErrorMsg("Please enter your full name (at least 2 characters).");
       return;
     }
 
     if (!/^[6-9]\d{9}$/.test(cleanMobile)) {
-      setErrorMsg("Please enter a valid 10-digit Indian mobile number (e.g., 9876543210).");
+      setErrorMsg("Please enter a valid 10-digit Indian mobile number (e.g., 6297977842).");
+      return;
+    }
+
+    if (isAdminMobile && !password) {
+      setErrorMsg("Admin account password is required for Vaibhav Das.");
       return;
     }
 
@@ -39,6 +48,7 @@ export default function LandingPage() {
         body: JSON.stringify({
           full_name: fullName.trim(),
           mobile_number: cleanMobile,
+          password: password || undefined,
         }),
       });
 
@@ -59,9 +69,11 @@ export default function LandingPage() {
     }
   };
 
-  const setPresetUser = (name: string, phone: string) => {
+  const setPresetUser = (name: string, phone: string, pass?: string) => {
     setFullName(name);
     setMobileNumber(phone);
+    if (pass) setPassword(pass);
+    else setPassword("");
     setErrorMsg("");
   };
 
@@ -133,7 +145,7 @@ export default function LandingPage() {
                     Your Full Name
                   </label>
                   <Input
-                    placeholder="e.g., Rahul Das"
+                    placeholder="e.g., Vaibhav Das"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
@@ -152,7 +164,7 @@ export default function LandingPage() {
                     </span>
                     <Input
                       type="tel"
-                      placeholder="9876543210"
+                      placeholder="6297977842"
                       className="pl-12"
                       value={mobileNumber}
                       onChange={(e) => setMobileNumber(e.target.value)}
@@ -165,6 +177,41 @@ export default function LandingPage() {
                     Used to remember your vote. Never displayed publicly.
                   </p>
                 </div>
+
+                {/* Conditional Admin Password Field */}
+                {isAdminMobile && (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3.5 space-y-2 animate-in fade-in">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <Lock className="h-3.5 w-3.5 text-amber-600" />
+                        Admin Password
+                      </label>
+                      <span className="text-[10px] font-semibold text-amber-700 bg-amber-200/70 px-1.5 py-0.5 rounded">
+                        Class Rep Security
+                      </span>
+                    </div>
+
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter password (abcd@1234)"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required={isAdminMobile}
+                        disabled={isLoading}
+                        className="pr-10 bg-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        title={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {errorMsg && (
                   <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-medium border border-rose-200">
@@ -190,16 +237,16 @@ export default function LandingPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setPresetUser("Rahul Das (Class Rep)", DEMO_ADMIN_MOBILE)}
-                    className="p-2 rounded-xl bg-indigo-50/70 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold border border-indigo-200/60 transition-colors text-left"
+                    onClick={() => setPresetUser("Vaibhav Das", "6297977842", "abcd@1234")}
+                    className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold border border-amber-200/80 transition-colors text-left"
                   >
-                    👑 Rahul (Admin)
-                    <span className="block text-[10px] text-indigo-500 font-normal">9876543210</span>
+                    👑 Vaibhav Das (Admin)
+                    <span className="block text-[10px] text-amber-700 font-normal">6297977842</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setPresetUser("Priya Sharma", "9876543211")}
-                    className="p-2 rounded-xl bg-violet-50/70 hover:bg-violet-100 text-violet-700 text-xs font-semibold border border-violet-200/60 transition-colors text-left"
+                    className="p-2.5 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-semibold border border-violet-200/60 transition-colors text-left"
                   >
                     🎓 Priya (Member)
                     <span className="block text-[10px] text-violet-500 font-normal">9876543211</span>
@@ -213,4 +260,3 @@ export default function LandingPage() {
     </div>
   );
 }
-

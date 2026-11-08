@@ -15,8 +15,8 @@ class CampusReunionStore {
   private profiles: Profile[] = [
     {
       id: "a0000000-0000-0000-0000-000000000001",
-      full_name: "Rahul Das (Class Rep)",
-      mobile_number: "9876543210",
+      full_name: "Vaibhav Das (Class Rep)",
+      mobile_number: "6297977842",
       role: "admin",
       created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
       updated_at: new Date(Date.now() - 5 * 86400000).toISOString(),
@@ -271,7 +271,7 @@ class CampusReunionStore {
       id: "usr_" + Math.random().toString(36).substring(2, 11),
       full_name: fullName,
       mobile_number: mobile,
-      role: mobile === "9876543210" ? "admin" : "member",
+      role: (mobile === "6297977842" || mobile === "9876543210") ? "admin" : "member",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

@@ -123,7 +123,7 @@ export function ChatBox({ currentUser, initialMessages = [], compact = false }: 
 
   return (
     <div className={`flex flex-col rounded-3xl border border-slate-200/90 bg-white shadow-sm overflow-hidden ${
-      compact ? "h-[450px]" : "h-[650px] md:h-[720px]"
+      compact ? "h-[450px]" : "h-[calc(100vh-13rem)] min-h-[480px] md:h-[720px]"
     }`}>
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-6 py-4">

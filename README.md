@@ -211,11 +211,11 @@ To enable 6-digit SMS OTP via Supabase:
 
 ## 🎓 Class Representatives & Demo Credentials
 
-| Role | Name | Mobile Number | Description |
-|---|---|---|---|
-| **Class Rep (Admin)** | Rahul Das | `9876543210` | Full administrative control, date management, tie resolution |
-| **Batchmate (Member)** | Priya Sharma | `9876543211` | Regular classmate voting and discussion |
-| **Batchmate (Member)** | Rohan Gupta | `9876543212` | Regular classmate voting and discussion |
+| Role | Name | Mobile Number | Password / Access | Description |
+|---|---|---|---|---|
+| **Class Rep (Admin)** | **Vaibhav Das** | `6297977842` | `abcd@1234` | Full administrative control, date management, tie resolution, moderation |
+| **Batchmate (Member)** | Priya Sharma | `9876543211` | *None required* | Regular classmate voting and discussion |
+| **Batchmate (Member)** | Rohan Gupta | `9876543212` | *None required* | Regular classmate voting and discussion |
 
 ---
 

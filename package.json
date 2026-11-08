@@ -34,12 +34,20 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "autoprefixer": "^10.4.20",
-    "eslint": "^9.20.1",
+    "eslint": "^10.14.0",
     "eslint-config-next": "^15.1.7",
     "postcss": "^8.5.2",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"
+  },
+  "overrides": {
+    "eslint-config-next": {
+      "eslint": "$eslint"
+    }
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "esbuild@0.28.2": true
   }
 }
-

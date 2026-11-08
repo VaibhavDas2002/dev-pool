@@ -17,6 +17,7 @@ export const joinSchema = z.object({
     .refine((val) => INDIAN_MOBILE_REGEX.test(val), {
       message: "Please enter a valid 10-digit Indian mobile number (e.g., 9876543210).",
     }),
+  password: z.string().optional(),
 });
 
 export type JoinInput = z.infer<typeof joinSchema>;

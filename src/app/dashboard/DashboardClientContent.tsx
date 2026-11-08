@@ -6,6 +6,7 @@ import { Poll, PollResults, PollOption, Vote, SessionUser } from "@/types";
 import { formatDisplayDate, formatWithDay } from "@/lib/utils/date";
 import { DateOptionCard } from "@/components/polling/DateOptionCard";
 import { ChatBox } from "@/components/chat/ChatBox";
+import { CertificateChecklistModal } from "@/components/dashboard/CertificateChecklistModal";
 import { 
   CheckCircle2, 
   ArrowRight, 
@@ -124,12 +125,15 @@ export function DashboardClientContent({
           </div>
         </div>
 
-        <Link href="/vote">
-          <Button variant="outline" size="sm" className="shrink-0 text-xs gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50">
-            <span>{userVote ? "Change Your Vote" : "Cast Vote Now"}</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Button>
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <CertificateChecklistModal finalizedDate={poll.finalized_date} />
+          <Link href="/vote">
+            <Button variant="outline" size="sm" className="shrink-0 text-xs gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+              <span>{userVote ? "Change Vote" : "Cast Vote Now"}</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Main Grid: Date Options (Left) and Live Results Summary (Right) */}

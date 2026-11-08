@@ -5,7 +5,7 @@
 -- 1. Insert Initial Profiles (Admin & Friends)
 INSERT INTO profiles (id, full_name, mobile_number, role, created_at)
 VALUES 
-    ('a0000000-0000-0000-0000-000000000001', 'Rahul Das (Class Rep)', '9876543210', 'admin', now() - INTERVAL '5 days'),
+    ('a0000000-0000-0000-0000-000000000001', 'Vaibhav Das (Class Rep)', '6297977842', 'admin', now() - INTERVAL '5 days'),
     ('a0000000-0000-0000-0000-000000000002', 'Priya Sharma', '9876543211', 'member', now() - INTERVAL '5 days'),
     ('a0000000-0000-0000-0000-000000000003', 'Rohan Gupta', '9876543212', 'member', now() - INTERVAL '4 days'),
     ('a0000000-0000-0000-0000-000000000004', 'Sneha Patel', '9876543213', 'member', now() - INTERVAL '4 days'),

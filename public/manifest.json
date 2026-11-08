@@ -1,0 +1,18 @@
+{
+  "name": "Campus Reunion Poll",
+  "short_name": "Reunion Poll",
+  "description": "B.Tech Certificate Collection Planner",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#4F46E5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
+

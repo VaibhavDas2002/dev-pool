@@ -33,8 +33,8 @@ export const dataService = {
       return existing as Profile;
     }
 
-    // Role: default to admin if mobile is 9876543210 (or configured initial admin)
-    const isAdmin = mobileNumber === (process.env.INITIAL_ADMIN_MOBILE || "9876543210");
+    // Role: default to admin if mobile is 6297977842 (or configured initial admin)
+    const isAdmin = mobileNumber === (process.env.INITIAL_ADMIN_MOBILE || "6297977842") || mobileNumber === "6297977842";
     const { data: newProfile, error: insertError } = await supabase
       .from("profiles")
       .insert({
