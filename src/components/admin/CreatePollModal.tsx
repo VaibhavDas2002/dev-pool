@@ -297,3 +297,4 @@ export function CreatePollModal({ isOpen, onClose, onSuccess }: CreatePollModalP
     </div>
   );
 }
+
