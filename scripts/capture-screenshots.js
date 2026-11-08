@@ -34,3 +34,4 @@ for (const p of pages) {
 }
 
 console.log("All screenshots captured successfully!");
+
