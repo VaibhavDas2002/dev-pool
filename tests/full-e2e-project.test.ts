@@ -110,6 +110,24 @@ describe("Campus Reunion Poll — Full Project End-to-End Test Suite", () => {
       const options = await dataService.getPollOptions(POLL_ID);
       expect(options.some((o) => o.option_date === "2026-12-10")).toBe(true);
     });
+
+    it("Allows admin to create a new reunion poll with custom dates and deadline", async () => {
+      const newPoll = await dataService.createPoll({
+        title: "Official Degree Handover Poll",
+        subtitle: "Pick a day in late November or December",
+        voting_deadline: "2026-11-24T18:00:00+05:30",
+        min_date: "2026-11-25",
+        max_date: "2026-12-20",
+        initial_dates: ["2026-11-26", "2026-11-28", "2026-12-04"],
+      }, "admin_user_id");
+
+      expect(newPoll).toBeDefined();
+      expect(newPoll.title).toBe("Official Degree Handover Poll");
+      expect(newPoll.min_date).toBe("2026-11-25");
+
+      const pollOptions = await dataService.getPollOptions(newPoll.id);
+      expect(pollOptions.length).toBeGreaterThanOrEqual(3);
+    });
   });
 
   describe("3. Atomic Voting & Single-Vote-Per-User Rule", () => {

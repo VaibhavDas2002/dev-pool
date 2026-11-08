@@ -89,3 +89,17 @@ export const pollConfigSchema = z.object({
 
 export type PollConfigInput = z.infer<typeof pollConfigSchema>;
 
+export const createPollSchema = z.object({
+  title: z.string().trim().min(5, { message: "Poll title must be at least 5 characters long." }).max(150),
+  subtitle: z.string().trim().max(250).optional(),
+  description: z.string().trim().max(1000).optional(),
+  voting_deadline: z.string().min(1, { message: "Voting deadline is required." }),
+  min_date: z.string().default("2026-11-25").refine((d) => d >= MIN_POLL_DATE, {
+    message: "Minimum selectable date must be after November 24, 2026 (earliest 2026-11-25).",
+  }),
+  max_date: z.string().default("2026-12-31"),
+  initial_dates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).optional(),
+});
+
+export type CreatePollInput = z.infer<typeof createPollSchema>;
+

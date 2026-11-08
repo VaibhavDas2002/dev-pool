@@ -15,22 +15,15 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  const pollId = DEFAULT_POLL_ID;
-  const [poll, results, options, members, chatMessages] = await Promise.all([
-    dataService.getPoll(pollId),
-    dataService.getPollResults(pollId),
-    dataService.getPollOptions(pollId),
+  const poll = await dataService.getPoll(DEFAULT_POLL_ID);
+  const activePollId = poll.id;
+
+  const [results, options, members, chatMessages] = await Promise.all([
+    dataService.getPollResults(activePollId),
+    dataService.getPollOptions(activePollId),
     dataService.getPublicMembers(),
     dataService.getChatMessages(),
   ]);
-
-  if (!poll) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <h2 className="text-xl font-bold">Admin control unavailable</h2>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50/70 py-10 px-4 sm:px-6 lg:px-8">

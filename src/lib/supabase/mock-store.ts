@@ -295,8 +295,53 @@ class CampusReunionStore {
   }
 
   // ==================== POLLS & OPTIONS ====================
-  public getPoll(pollId: string): Poll | undefined {
-    return this.polls.find((p) => p.id === pollId) || this.polls[0];
+  public getPoll(pollId: string): Poll {
+    const found = this.polls.find((p) => p.id === pollId);
+    if (found) return found;
+    if (this.polls.length > 0) return this.polls[0];
+    return this.createPoll({});
+  }
+
+  public createPoll(data: Partial<Poll>, initialDates?: string[]): Poll {
+    const newId = data.id || ("b" + Math.random().toString(36).substring(2, 11) + "-0000-0000-0000");
+    const minDate = data.min_date || "2026-11-25";
+    if (minDate < "2026-11-25") {
+      throw new Error("Date must be after November 24, 2026");
+    }
+
+    const newPoll: Poll = {
+      id: newId,
+      title: data.title || "When Should We Visit College?",
+      subtitle: data.subtitle || "Let's choose the perfect day to collect our B.Tech certificates together!",
+      description: data.description || "The administration office requires all B.Tech degree holders to be present with signed clearance forms. Let's go as one batch, take graduation photos on the library stairs, and celebrate together!",
+      min_date: minDate,
+      max_date: data.max_date || "2026-12-31",
+      voting_deadline: data.voting_deadline || "2026-11-23T23:59:59+05:30",
+      status: data.status || "open",
+      created_by: data.created_by || "a0000000-0000-0000-0000-000000000001",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    this.polls.unshift(newPoll);
+
+    // Initial dates
+    const dates = initialDates && initialDates.length > 0 
+      ? initialDates 
+      : ["2026-11-25", "2026-11-27", "2026-11-30", "2026-12-02"];
+
+    dates.forEach((d) => {
+      if (d >= minDate) {
+        this.pollOptions.push({
+          id: "c" + Math.random().toString(36).substring(2, 11) + "-0000-0000",
+          poll_id: newId,
+          option_date: d,
+          created_at: new Date().toISOString(),
+        });
+      }
+    });
+
+    return newPoll;
   }
 
   public getPollOptions(pollId: string): PollOption[] {

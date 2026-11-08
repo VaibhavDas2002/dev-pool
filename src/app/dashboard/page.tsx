@@ -15,22 +15,15 @@ export default async function DashboardPage() {
     redirect("/");
   }
 
-  const pollId = DEFAULT_POLL_ID;
-  const [poll, results, options, userVote, announcements] = await Promise.all([
-    dataService.getPoll(pollId),
-    dataService.getPollResults(pollId),
-    dataService.getPollOptions(pollId),
-    dataService.getUserVote(pollId, user.id),
+  const poll = await dataService.getPoll(DEFAULT_POLL_ID);
+  const activePollId = poll.id;
+
+  const [results, options, userVote, announcements] = await Promise.all([
+    dataService.getPollResults(activePollId),
+    dataService.getPollOptions(activePollId),
+    dataService.getUserVote(activePollId, user.id),
     dataService.getAnnouncements(),
   ]);
-
-  if (!poll) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-16 text-center">
-        <h2 className="text-2xl font-bold">No active reunion poll found</h2>
-      </div>
-    );
-  }
 
   const isFinalized = poll.status === "finalized" && !!poll.finalized_date;
 

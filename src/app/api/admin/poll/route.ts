@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { dataService } from "@/lib/data-service";
-import { dateOptionSchema, tieResolutionSchema } from "@/lib/validations";
+import { dateOptionSchema, tieResolutionSchema, createPollSchema } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,6 +12,16 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const { action } = body;
+
+    if (action === "CREATE_POLL") {
+      const pollPayload = body.poll_data || body;
+      const validation = createPollSchema.safeParse(pollPayload);
+      if (!validation.success) {
+        return NextResponse.json({ error: validation.error.errors[0]?.message || "Invalid poll creation data" }, { status: 400 });
+      }
+      const newPoll = await dataService.createPoll(validation.data, user.id);
+      return NextResponse.json({ success: true, poll: newPoll });
+    }
 
     if (action === "ADD_OPTION") {
       const validation = dateOptionSchema.safeParse(body);

@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CreatePollModal } from "@/components/admin/CreatePollModal";
 import { toast } from "sonner";
 
 interface AdminClientPageProps {
@@ -51,6 +52,7 @@ export function AdminClientPage({
   const [options, setOptions] = useState<PollOption[]>(initialOptions);
   const [members, setMembers] = useState<PublicProfile[]>(initialMembers);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Form states
   const [newOptionDate, setNewOptionDate] = useState("");
@@ -267,9 +269,20 @@ export function AdminClientPage({
             </p>
           </div>
 
-          <Badge variant="amber" className="text-xs px-3 py-1 font-bold">
-            Administrator: {user.full_name}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="bg-white hover:bg-indigo-50 text-indigo-700 border-indigo-200 text-xs font-bold shadow-2xs"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1 text-indigo-600" />
+              Create New Poll
+            </Button>
+            <Badge variant="amber" className="text-xs px-3 py-1 font-bold">
+              Administrator: {user.full_name}
+            </Badge>
+          </div>
         </div>
       </div>
 
@@ -565,6 +578,12 @@ export function AdminClientPage({
           ))}
         </div>
       </Card>
+
+      {/* Create Poll Dialog */}
+      <CreatePollModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </div>
   );
 }
