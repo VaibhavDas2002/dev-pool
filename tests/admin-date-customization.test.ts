@@ -97,5 +97,19 @@ describe("Admin Date Customization & Interactive Selection Tests", () => {
     const hasLabelOrNote = results.options.some((o) => o.label || o.note || o.is_recommended);
     expect(hasLabelOrNote).toBe(true);
   });
+
+  it("should retrieve saved profiles for autocomplete suggestions with full name and mobile number", async () => {
+    const profiles = await dataService.getSavedProfiles();
+    expect(profiles.length).toBeGreaterThan(0);
+
+    const vaibhav = profiles.find((p) => p.mobile_number === "6297977842");
+    expect(vaibhav).toBeDefined();
+    expect(vaibhav?.full_name).toBe("Vaibhav Das");
+    expect(vaibhav?.role).toBe("admin");
+
+    const priya = profiles.find((p) => p.mobile_number === "9876543211");
+    expect(priya).toBeDefined();
+    expect(priya?.full_name).toBe("Priya Sharma");
+  });
 });
 

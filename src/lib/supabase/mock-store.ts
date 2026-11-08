@@ -266,6 +266,10 @@ class CampusReunionStore {
   private auditLogs: PollAuditLog[] = [];
 
   // ==================== PROFILES ====================
+  public getAllProfiles(): Profile[] {
+    return [...this.profiles];
+  }
+
   public findProfileByMobile(mobile: string): Profile | undefined {
     return this.profiles.find((p) => p.mobile_number === mobile);
   }

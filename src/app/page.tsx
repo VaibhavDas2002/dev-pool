@@ -1,13 +1,35 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { GraduationCap, Users, Shield, ArrowRight, Sparkles, CheckCircle2, Lock, Eye, EyeOff } from "lucide-react";
+import {
+  GraduationCap,
+  Users,
+  Shield,
+  ArrowRight,
+  Sparkles,
+  CheckCircle2,
+  Lock,
+  Eye,
+  EyeOff,
+  Phone,
+  UserCheck,
+  Search,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { AdminLoginModal } from "@/components/auth/AdminLoginModal";
+import { getInitials, getAvatarStyle } from "@/lib/utils";
 import { toast } from "sonner";
+
+interface SavedProfile {
+  id: string;
+  full_name: string;
+  mobile_number: string;
+  role: "admin" | "member";
+}
 
 export default function LandingPage() {
   const router = useRouter();
@@ -19,8 +41,71 @@ export default function LandingPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
+  // Suggestions state
+  const [savedProfiles, setSavedProfiles] = useState<SavedProfile[]>([]);
+  const [showNameSuggestions, setShowNameSuggestions] = useState(false);
+  const [showMobileSuggestions, setShowMobileSuggestions] = useState(false);
+  const nameContainerRef = useRef<HTMLDivElement>(null);
+  const mobileContainerRef = useRef<HTMLDivElement>(null);
+
+  // Fetch saved profiles on mount
+  useEffect(() => {
+    fetch("/api/auth/suggestions")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.profiles && Array.isArray(data.profiles)) {
+          setSavedProfiles(data.profiles);
+        }
+      })
+      .catch((err) => console.warn("Could not load profile suggestions:", err));
+  }, []);
+
+  // Dismiss dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (nameContainerRef.current && !nameContainerRef.current.contains(e.target as Node)) {
+        setShowNameSuggestions(false);
+      }
+      if (mobileContainerRef.current && !mobileContainerRef.current.contains(e.target as Node)) {
+        setShowMobileSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const cleanMobile = mobileNumber.replace(/\D/g, "");
   const isAdminMobile = cleanMobile === "6297977842";
+
+  // Filter profiles for name input
+  const filteredByName = savedProfiles.filter((p) => {
+    if (!fullName.trim()) return true;
+    const q = fullName.toLowerCase().trim();
+    return (
+      p.full_name.toLowerCase().includes(q) ||
+      p.mobile_number.includes(q)
+    );
+  });
+
+  // Filter profiles for mobile input
+  const filteredByMobile = savedProfiles.filter((p) => {
+    if (!mobileNumber.trim()) return true;
+    const q = mobileNumber.trim().replace(/\D/g, "");
+    const nameQ = mobileNumber.toLowerCase().trim();
+    return (
+      p.mobile_number.includes(q) ||
+      p.full_name.toLowerCase().includes(nameQ)
+    );
+  });
+
+  const handleSelectProfile = (p: SavedProfile) => {
+    setFullName(p.full_name);
+    setMobileNumber(p.mobile_number);
+    setShowNameSuggestions(false);
+    setShowMobileSuggestions(false);
+    setErrorMsg("");
+    toast.success(`Selected ${p.full_name}! (Both name & mobile filled)`);
+  };
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,8 +218,8 @@ export default function LandingPage() {
 
         {/* Right Column: Simple Onboarding Card */}
         <div className="lg:col-span-5">
-          <Card className="rounded-3xl border-slate-200/80 shadow-xl bg-white/95 backdrop-blur-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white">
+          <Card className="rounded-3xl border-slate-200/80 shadow-xl bg-white/95 backdrop-blur-sm">
+            <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white rounded-t-3xl">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-inner">
@@ -160,21 +245,98 @@ export default function LandingPage() {
 
             <CardContent className="p-6">
               <form onSubmit={handleJoin} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Your Full Name
-                  </label>
+                {/* Full Name Input with Autocomplete Dropdown */}
+                <div ref={nameContainerRef} className="relative">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Your Full Name
+                    </label>
+                    {savedProfiles.length > 0 && (
+                      <span className="text-[10px] text-indigo-600 font-semibold flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {savedProfiles.length} registered
+                      </span>
+                    )}
+                  </div>
                   <Input
                     placeholder="e.g., Rahul Das"
                     value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                    onChange={(e) => {
+                      setFullName(e.target.value);
+                      setShowNameSuggestions(true);
+                    }}
+                    onFocus={() => setShowNameSuggestions(true)}
                     required
                     disabled={isLoading}
                     autoFocus
                   />
+
+                  {/* Autocomplete Dropdown for Name */}
+                  {showNameSuggestions && (
+                    <div className="absolute top-full left-0 right-0 mt-1.5 z-50 rounded-2xl border border-indigo-100 bg-white shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                      <div className="bg-slate-50/90 px-3.5 py-2 border-b border-slate-100 flex items-center justify-between text-[11px] font-bold">
+                        <span className="flex items-center gap-1.5 text-indigo-700">
+                          <Users className="h-3.5 w-3.5 text-indigo-600" />
+                          Saved Batchmates ({filteredByName.length})
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-normal">
+                          Click to auto-fill name & number
+                        </span>
+                      </div>
+
+                      {filteredByName.length === 0 ? (
+                        <div className="p-3.5 text-center text-xs text-slate-400">
+                          No matching registered batchmate found. You can register as a new member!
+                        </div>
+                      ) : (
+                        <div className="max-h-56 overflow-y-auto divide-y divide-slate-50">
+                          {filteredByName.slice(0, 8).map((p) => (
+                            <div
+                              key={p.id}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                handleSelectProfile(p);
+                              }}
+                              className="flex items-center justify-between p-2.5 px-3.5 hover:bg-indigo-50/80 cursor-pointer transition-colors group"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div
+                                  style={getAvatarStyle(p.full_name)}
+                                  className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-black shrink-0 shadow-2xs"
+                                >
+                                  {getInitials(p.full_name)}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 truncate transition-colors">
+                                    {p.full_name}
+                                  </p>
+                                  <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                                    <Phone className="h-2.5 w-2.5 text-slate-400" />
+                                    +91 {p.mobile_number}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="shrink-0 flex items-center gap-1.5">
+                                {p.role === "admin" && (
+                                  <Badge variant="amber" className="text-[10px] py-0 px-1.5 font-bold">
+                                    👑 Admin
+                                  </Badge>
+                                )}
+                                <span className="text-[11px] font-semibold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  Select &rarr;
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                <div>
+                {/* 10-Digit Mobile Number Input with Autocomplete Dropdown */}
+                <div ref={mobileContainerRef} className="relative">
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                     10-Digit Mobile Number
                   </label>
@@ -187,7 +349,11 @@ export default function LandingPage() {
                       placeholder="9876543210"
                       className="pl-12"
                       value={mobileNumber}
-                      onChange={(e) => setMobileNumber(e.target.value)}
+                      onChange={(e) => {
+                        setMobileNumber(e.target.value);
+                        setShowMobileSuggestions(true);
+                      }}
+                      onFocus={() => setShowMobileSuggestions(true)}
                       maxLength={10}
                       required
                       disabled={isLoading}
@@ -196,6 +362,68 @@ export default function LandingPage() {
                   <p className="mt-1 text-[11px] text-slate-400">
                     Used to remember your vote. Never displayed publicly.
                   </p>
+
+                  {/* Autocomplete Dropdown for Mobile Number */}
+                  {showMobileSuggestions && (
+                    <div className="absolute top-full left-0 right-0 mt-1.5 z-50 rounded-2xl border border-indigo-100 bg-white shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                      <div className="bg-slate-50/90 px-3.5 py-2 border-b border-slate-100 flex items-center justify-between text-[11px] font-bold">
+                        <span className="flex items-center gap-1.5 text-indigo-700">
+                          <Phone className="h-3.5 w-3.5 text-indigo-600" />
+                          Saved Mobile Numbers ({filteredByMobile.length})
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-normal">
+                          Click to auto-fill
+                        </span>
+                      </div>
+
+                      {filteredByMobile.length === 0 ? (
+                        <div className="p-3.5 text-center text-xs text-slate-400">
+                          No matching number found in saved batchmates. You can register as a new member!
+                        </div>
+                      ) : (
+                        <div className="max-h-56 overflow-y-auto divide-y divide-slate-50">
+                          {filteredByMobile.slice(0, 8).map((p) => (
+                            <div
+                              key={p.id}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                handleSelectProfile(p);
+                              }}
+                              className="flex items-center justify-between p-2.5 px-3.5 hover:bg-indigo-50/80 cursor-pointer transition-colors group"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div
+                                  style={getAvatarStyle(p.full_name)}
+                                  className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-black shrink-0 shadow-2xs"
+                                >
+                                  {getInitials(p.full_name)}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 truncate transition-colors">
+                                    +91 {p.mobile_number}
+                                  </p>
+                                  <p className="text-[11px] text-slate-500 font-medium">
+                                    {p.full_name}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="shrink-0 flex items-center gap-1.5">
+                                {p.role === "admin" && (
+                                  <Badge variant="amber" className="text-[10px] py-0 px-1.5 font-bold">
+                                    👑 Admin
+                                  </Badge>
+                                )}
+                                <span className="text-[11px] font-semibold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  Select &rarr;
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Conditional Admin Password Field if Admin phone is entered */}
@@ -214,7 +442,7 @@ export default function LandingPage() {
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
-                        placeholder="Enter password (admin@1234)"
+                        placeholder="Enter password (abcd@1234)"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required={isAdminMobile}
@@ -268,7 +496,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Admin Email & Password Login Dialog */}
+      {/* Admin Login Modal */}
       <AdminLoginModal
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}

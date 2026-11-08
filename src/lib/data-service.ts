@@ -2,6 +2,7 @@ import { isSupabaseConfigured, createAdminClient } from "./supabase/server";
 import { mockStore } from "./supabase/mock-store";
 import { 
   Profile, 
+  UserRole,
   Poll, 
   PollOption, 
   Vote, 
@@ -70,6 +71,46 @@ export const dataService = {
 
     if (error || !data) return null;
     return data as Profile;
+  },
+
+  /**
+   * Get all registered profiles for fast client onboarding autocomplete
+   */
+  async getSavedProfiles(): Promise<Array<{ id: string; full_name: string; mobile_number: string; role: UserRole }>> {
+    if (!isSupabaseConfigured()) {
+      return mockStore.getAllProfiles().map((p) => ({
+        id: p.id,
+        full_name: p.full_name,
+        mobile_number: p.mobile_number,
+        role: p.role,
+      }));
+    }
+
+    const supabase = createAdminClient();
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, mobile_number, role")
+        .order("created_at", { ascending: true });
+
+      if (error || !data || data.length === 0) {
+        return mockStore.getAllProfiles().map((p) => ({
+          id: p.id,
+          full_name: p.full_name,
+          mobile_number: p.mobile_number,
+          role: p.role,
+        }));
+      }
+
+      return data as Array<{ id: string; full_name: string; mobile_number: string; role: UserRole }>;
+    } catch {
+      return mockStore.getAllProfiles().map((p) => ({
+        id: p.id,
+        full_name: p.full_name,
+        mobile_number: p.mobile_number,
+        role: p.role,
+      }));
+    }
   },
 
   /**
