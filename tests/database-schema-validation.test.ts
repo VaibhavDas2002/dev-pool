@@ -72,3 +72,4 @@ describe("Campus Reunion Poll — Database Schema & SQL Migration Integrity", ()
     }
   });
 });
+
