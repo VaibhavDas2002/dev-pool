@@ -255,3 +255,4 @@ export function Navbar({ user }: NavbarProps) {
     </header>
   );
 }
+

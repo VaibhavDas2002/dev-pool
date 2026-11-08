@@ -54,3 +54,4 @@ export async function triggerConfetti() {
     // Canvas confetti not supported in SSR/headless
   }
 }
+

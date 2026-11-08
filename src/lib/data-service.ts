@@ -318,7 +318,7 @@ export const dataService = {
   /**
    * Add a new date option (Admin only, must be >= 2026-11-25)
    */
-  async addDateOption(pollId: string, optionDate: string): Promise<PollOption> {
+  async addDateOption(pollId: string, optionDate: string, actorId?: string): Promise<PollOption> {
     if (optionDate < "2026-11-25") {
       throw new Error("Date must be after November 24, 2026");
     }
@@ -339,6 +339,15 @@ export const dataService = {
 
     if (error) {
       throw new Error(error.message || "Failed to add date option");
+    }
+
+    if (actorId) {
+      await supabase.from("poll_audit_logs").insert({
+        poll_id: pollId,
+        actor_id: actorId,
+        action: "ADD_POLL_OPTION",
+        new_value: { optionDate },
+      });
     }
 
     return data as PollOption;
@@ -506,3 +515,4 @@ export const dataService = {
     return data as Announcement[];
   },
 };
+

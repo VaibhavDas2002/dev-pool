@@ -104,3 +104,4 @@ VALUES (
     now() - INTERVAL '4 days'
 )
 ON CONFLICT (id) DO NOTHING;
+

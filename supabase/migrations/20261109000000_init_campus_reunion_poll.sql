@@ -360,3 +360,4 @@ BEGIN
         ALTER PUBLICATION supabase_realtime ADD TABLE poll_options;
     END IF;
 END $$;
+

@@ -123,3 +123,4 @@ export function getTimeRemaining(targetDateStr: string): TimeRemaining {
     isExpired: false,
   };
 }
+
