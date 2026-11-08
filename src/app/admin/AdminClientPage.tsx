@@ -59,6 +59,7 @@ export function AdminClientPage({
   const [votingDeadline, setVotingDeadline] = useState(
     poll.voting_deadline ? poll.voting_deadline.substring(0, 16) : ""
   );
+  const [disableWeekends, setDisableWeekends] = useState(false);
   const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
 
   // Tie resolution
@@ -74,6 +75,14 @@ export function AdminClientPage({
     if (newOptionDate < "2026-11-25") {
       toast.error("Date must be after November 24, 2026 (earliest is Nov 25, 2026).");
       return;
+    }
+
+    if (disableWeekends) {
+      const day = new Date(newOptionDate).getDay();
+      if (day === 0 || day === 6) {
+        toast.error("Weekends disabled: Administrative counters and Registrar office are closed on Saturday and Sunday.");
+        return;
+      }
     }
 
     try {
@@ -423,6 +432,27 @@ export function AdminClientPage({
             </CardHeader>
 
             <CardContent className="p-6 space-y-5">
+              {/* Weekend Policy Toggle */}
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 block">
+                    Disable Weekends (Sat/Sun)
+                  </span>
+                  <span className="text-[11px] text-slate-500">
+                    Academic counters are closed on weekends
+                  </span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={disableWeekends}
+                    onChange={(e) => setDisableWeekends(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
               {/* Add Date Form */}
               <form onSubmit={handleAddOption} className="flex gap-2">
                 <input
