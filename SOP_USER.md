@@ -30,11 +30,17 @@ This Standard Operating Procedure (SOP) guides graduating B.Tech students on how
 ```
 ┌────────────────────────────────────────────────────────┐
 │  Step 1: Open https://dev-pool-sable.vercel.app/       │
-│  Step 2: Enter your Full Name (e.g. Priya Sharma)      │
-│  Step 3: Enter your 10-Digit Indian Mobile Number      │
+│  Step 2: Start typing your Name or Mobile Number       │
+│  Step 3: Tap your profile from the instant dropdown    │
+│          (auto-populates both Name and Number!) ⚡     │
 │  Step 4: Tap "Join the Reunion" 🎓                     │
 └────────────────────────────────────────────────────────┘
 ```
+
+### 1.1 Instant Profile Autocomplete
+- When you click or type into **Your Full Name** or **10-Digit Mobile Number**, the platform instantly displays a dropdown of all saved batchmates with their initials, name, and phone number.
+- Tapping any suggestion auto-fills both fields instantly.
+- If you are a new student joining for the first time, simply type your name and 10-digit number. The system will register your profile automatically.
 
 ### 1.1 Privacy Guarantee
 - Your mobile number is **strictly confidential**. It is used solely as your unique voter ticket so your vote and chat messages are restored when you return.
