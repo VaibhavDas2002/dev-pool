@@ -19,3 +19,4 @@ SELECT
     v.reason AS voted_reason
 FROM profiles p
 LEFT JOIN votes v ON v.user_id = p.id;
+
