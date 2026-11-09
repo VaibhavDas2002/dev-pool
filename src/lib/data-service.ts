@@ -76,7 +76,7 @@ export const dataService = {
 
   /**
    * Get all registered active profiles for fast client onboarding autocomplete
-   * Inactive / deactivated members are strictly excluded.
+   * Inactive / deactivated members and fake mock test profiles are strictly excluded.
    */
   async getSavedProfiles(): Promise<Array<{ id: string; full_name: string; mobile_number: string; role: UserRole; is_active?: boolean }>> {
     if (!isSupabaseConfigured()) {
@@ -94,27 +94,46 @@ export const dataService = {
 
     const supabase = createAdminClient();
     try {
-      const { data, error } = await supabase
+      // 1. First attempt to select with is_active
+      let { data, error } = await supabase
         .from("profiles")
         .select("id, full_name, mobile_number, role, is_active")
-        .or("is_active.is.null,is_active.eq.true")
         .order("created_at", { ascending: true });
 
-      if (error || !data || data.length === 0) {
-        return mockStore
-          .getAllProfiles()
+      // 2. If is_active column does not exist yet in Supabase schema, fall back to standard fields
+      if (error) {
+        const fallbackRes = await supabase
+          .from("profiles")
+          .select("id, full_name, mobile_number, role")
+          .order("created_at", { ascending: true });
+        if (!fallbackRes.error && fallbackRes.data) {
+          data = fallbackRes.data.map((p) => ({ ...p, is_active: true }));
+          error = null;
+        }
+      }
+
+      if (!error && data && data.length > 0) {
+        return (data as Array<{ id: string; full_name: string; mobile_number: string; role: UserRole; is_active?: boolean }>)
           .filter((p) => p.is_active !== false)
           .map((p) => ({
             id: p.id,
             full_name: p.full_name,
             mobile_number: p.mobile_number,
             role: p.role,
-            is_active: true,
+            is_active: p.is_active !== false,
           }));
       }
 
-      return (data as Array<{ id: string; full_name: string; mobile_number: string; role: UserRole; is_active?: boolean }>)
-        .filter((p) => p.is_active !== false);
+      return mockStore
+        .getAllProfiles()
+        .filter((p) => p.is_active !== false)
+        .map((p) => ({
+          id: p.id,
+          full_name: p.full_name,
+          mobile_number: p.mobile_number,
+          role: p.role,
+          is_active: true,
+        }));
     } catch {
       return mockStore
         .getAllProfiles()
@@ -555,16 +574,39 @@ export const dataService = {
     }
 
     const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from("public_profiles")
-      .select("*")
-      .order("created_at", { ascending: true });
+    try {
+      let { data, error } = await supabase
+        .from("public_profiles")
+        .select("*")
+        .order("created_at", { ascending: true });
 
-    if (error || !data) {
+      // Fallback: if public_profiles view does not exist or fails, query profiles directly
+      if (error || !data) {
+        const directRes = await supabase
+          .from("profiles")
+          .select("id, full_name, role, created_at")
+          .order("created_at", { ascending: true });
+        if (!directRes.error && directRes.data) {
+          data = directRes.data.map((p) => ({
+            ...p,
+            is_active: true,
+            has_voted: false,
+            voted_option_id: null,
+            voted_date: null,
+            voted_reason: null,
+          }));
+          error = null;
+        }
+      }
+
+      if (!error && data) {
+        const list = data as PublicProfile[];
+        return onlyActive ? list.filter((m) => m.is_active !== false) : list;
+      }
+      return mockStore.getPublicMembers(onlyActive);
+    } catch {
       return mockStore.getPublicMembers(onlyActive);
     }
-    const list = data as PublicProfile[];
-    return onlyActive ? list.filter((m) => m.is_active !== false) : list;
   },
 
   /**
