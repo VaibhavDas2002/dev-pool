@@ -122,7 +122,12 @@ export async function POST(req: NextRequest) {
       const updatedProfile = await dataService.updateMemberStatus(
         validation.data.user_id,
         validation.data.is_active,
-        user.id
+        user.id,
+        // Pass optional member metadata for resilient cold-start recovery
+        {
+          full_name: validation.data.full_name,
+          mobile_number: validation.data.mobile_number,
+        }
       );
       const publicMembers = await dataService.getPublicMembers();
       return NextResponse.json({ success: true, profile: updatedProfile, members: publicMembers });

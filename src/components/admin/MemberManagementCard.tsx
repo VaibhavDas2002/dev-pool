@@ -70,6 +70,10 @@ export function MemberManagementCard({
           action: "TOGGLE_MEMBER_STATUS",
           user_id: member.id,
           is_active: newActiveState,
+          // Send member metadata so the server can auto-register if the profile
+          // was lost due to a cold-start (Vercel serverless resets in-memory mock-store)
+          full_name: member.full_name,
+          mobile_number: member.mobile_number,
         }),
       });
 

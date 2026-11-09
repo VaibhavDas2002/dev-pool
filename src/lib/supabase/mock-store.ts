@@ -312,12 +312,46 @@ class CampusReunionStore {
         voted_option_id: vote ? vote.option_id : null,
         voted_date: votedOption ? votedOption.option_date : null,
         voted_reason: vote ? vote.reason : null,
+        mobile_number: p.mobile_number, // needed for resilient deactivation across cold-starts
       };
     });
   }
 
-  public toggleMemberStatus(userId: string, actorId: string, isActive?: boolean): Profile {
-    const profile = this.profiles.find((p) => p.id === userId);
+  public toggleMemberStatus(
+    userId: string,
+    actorId: string,
+    isActive?: boolean,
+    fallbackData?: { full_name?: string; mobile_number?: string }
+  ): Profile {
+    // 1. Primary lookup: by ID
+    let profile = this.profiles.find((p) => p.id === userId);
+
+    // 2. Fallback: by mobile number (handles cold-start ID mismatch)
+    if (!profile && fallbackData?.mobile_number) {
+      profile = this.profiles.find((p) => p.mobile_number === fallbackData.mobile_number);
+      if (profile) {
+        // Update the in-memory profile ID to match what the client sent
+        // so future lookups work correctly in this server instance
+        profile.id = userId;
+      }
+    }
+
+    // 3. Auto-register: if member was created in a previous server instance (cold-start),
+    //    re-create the profile so the status toggle can proceed
+    if (!profile && fallbackData?.full_name) {
+      const newProfile: Profile = {
+        id: userId,
+        full_name: fallbackData.full_name,
+        mobile_number: fallbackData.mobile_number || "",
+        role: "member",
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      this.profiles.push(newProfile);
+      profile = newProfile;
+    }
+
     if (!profile) throw new Error("Member profile not found");
 
     if (profile.role === "admin" && profile.mobile_number === "6297977842" && isActive === false) {

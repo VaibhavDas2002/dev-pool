@@ -22,6 +22,7 @@ export interface PublicProfile {
   voted_option_id?: string | null;
   voted_date?: string | null;
   voted_reason?: string | null;
+  mobile_number?: string | null; // included for admin member management (resilient deactivation)
 }
 
 export interface Poll {

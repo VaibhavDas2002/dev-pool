@@ -141,6 +141,9 @@ export type CreatePollInput = z.infer<typeof createPollSchema>;
 export const updateMemberStatusSchema = z.object({
   user_id: z.string().min(1),
   is_active: z.boolean(),
+  // Optional member metadata for resilient mock-store lookup / auto-registration
+  full_name: z.string().trim().optional(),
+  mobile_number: z.string().trim().optional(),
 });
 
 export type UpdateMemberStatusInput = z.infer<typeof updateMemberStatusSchema>;

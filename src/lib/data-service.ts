@@ -554,10 +554,11 @@ export const dataService = {
   async updateMemberStatus(
     userId: string,
     isActive: boolean,
-    actorId: string
+    actorId: string,
+    fallbackData?: { full_name?: string; mobile_number?: string }
   ): Promise<Profile> {
     if (!isSupabaseConfigured()) {
-      return mockStore.toggleMemberStatus(userId, actorId, isActive);
+      return mockStore.toggleMemberStatus(userId, actorId, isActive, fallbackData);
     }
 
     const supabase = createAdminClient();
@@ -584,7 +585,7 @@ export const dataService = {
 
     if (error) {
       console.warn("Supabase updateMemberStatus fallback:", error);
-      return mockStore.toggleMemberStatus(userId, actorId, isActive);
+      return mockStore.toggleMemberStatus(userId, actorId, isActive, fallbackData);
     }
 
     await supabase.from("poll_audit_logs").insert({
