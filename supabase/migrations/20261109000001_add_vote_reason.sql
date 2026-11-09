@@ -1,9 +1,9 @@
 -- Migration: 20261109000001_add_vote_reason.sql
--- Description: Adds reason/message text to votes table so batchmates can share why they chose a date
+-- Description: Adds reason/message text to votes table and ensures admins can vote in any poll
 
 ALTER TABLE votes ADD COLUMN IF NOT EXISTS reason TEXT;
 
--- Update cast_or_update_vote function to accept p_reason
+-- Update cast_or_update_vote function to accept p_reason and allow admins to vote in any poll
 CREATE OR REPLACE FUNCTION cast_or_update_vote(
     p_poll_id UUID,
     p_option_id UUID,
@@ -21,14 +21,15 @@ DECLARE
     v_is_update BOOLEAN := FALSE;
     v_selected_date DATE;
     v_is_active BOOLEAN;
+    v_role TEXT;
 BEGIN
-    -- Check user active status
-    SELECT is_active INTO v_is_active FROM profiles WHERE id = p_user_id;
+    -- Check user active status & role
+    SELECT role, is_active INTO v_role, v_is_active FROM profiles WHERE id = p_user_id;
     IF v_is_active = FALSE THEN
         RAISE EXCEPTION 'Your account has been deactivated by the administrator.';
     END IF;
 
-    -- Validate poll status and deadline
+    -- Validate poll status and deadline for non-admins
     SELECT status, voting_deadline INTO v_poll_status, v_voting_deadline
     FROM polls WHERE id = p_poll_id;
 
@@ -36,12 +37,15 @@ BEGIN
         RAISE EXCEPTION 'Poll not found';
     END IF;
 
-    IF v_poll_status != 'open' THEN
-        RAISE EXCEPTION 'Voting is currently %', v_poll_status;
-    END IF;
+    -- Admins can vote in any poll; non-admins require open status and valid deadline
+    IF v_role != 'admin' THEN
+        IF v_poll_status != 'open' THEN
+            RAISE EXCEPTION 'Voting is currently %', v_poll_status;
+        END IF;
 
-    IF v_voting_deadline < now() THEN
-        RAISE EXCEPTION 'The voting deadline has expired';
+        IF v_voting_deadline < now() THEN
+            RAISE EXCEPTION 'The voting deadline has expired';
+        END IF;
     END IF;
 
     -- Validate option belongs to poll

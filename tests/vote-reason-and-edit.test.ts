@@ -93,4 +93,52 @@ describe("Vote Reason Configuration & Self-Vote Editing", () => {
     expect(votersWithReason.length).toBeGreaterThan(0);
     expect(typeof votersWithReason[0].reason).toBe("string");
   });
+
+  it("should ensure that an admin can vote in ANY poll, including draft or closed polls", () => {
+    const admin = mockStore.findProfileByMobile("6297977842");
+    expect(admin).toBeDefined();
+    expect(admin?.role).toBe("admin");
+
+    // 1. Create a draft poll
+    const draftPoll = mockStore.createPoll({
+      title: "Draft Reunion Poll",
+      status: "draft",
+    }, ["2026-11-26", "2026-11-28"]);
+    const draftOption = mockStore.getPollOptions(draftPoll.id)[0];
+
+    // Regular member should be rejected
+    const member = mockStore.findProfileByMobile("9876543211");
+    expect(() => {
+      mockStore.castOrUpdateVote(draftPoll.id, draftOption.id, member!.id, "Testing");
+    }).toThrow(/Voting is currently draft/i);
+
+    // Admin CAN vote in the draft poll!
+    const adminVoteRes = mockStore.castOrUpdateVote(
+      draftPoll.id,
+      draftOption.id,
+      admin!.id,
+      "Admin test vote on draft poll"
+    );
+    expect(adminVoteRes.success).toBe(true);
+
+    // 2. Set poll status to closed
+    mockStore.updatePollConfig(draftPoll.id, { status: "closed" });
+
+    // Member rejected on closed poll
+    expect(() => {
+      mockStore.castOrUpdateVote(draftPoll.id, draftOption.id, member!.id);
+    }).toThrow(/Voting is currently closed/i);
+
+    // Admin CAN vote or update vote on closed poll!
+    const draftOption2 = mockStore.getPollOptions(draftPoll.id)[1];
+    const adminUpdateRes = mockStore.castOrUpdateVote(
+      draftPoll.id,
+      draftOption2.id,
+      admin!.id,
+      "Admin updated vote on closed poll"
+    );
+    expect(adminUpdateRes.success).toBe(true);
+    expect(adminUpdateRes.is_update).toBe(true);
+  });
 });
+

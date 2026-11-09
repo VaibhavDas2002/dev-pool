@@ -18,11 +18,12 @@ export default async function AdminPage() {
   const poll = await dataService.getPoll(DEFAULT_POLL_ID);
   const activePollId = poll.id;
 
-  const [results, options, members, chatMessages] = await Promise.all([
+  const [results, options, members, chatMessages, adminVote] = await Promise.all([
     dataService.getPollResults(activePollId),
     dataService.getPollOptions(activePollId),
     dataService.getPublicMembers(),
     dataService.getChatMessages(),
+    dataService.getUserVote(activePollId, user.id),
   ]);
 
   return (
@@ -35,6 +36,7 @@ export default async function AdminPage() {
           initialOptions={options}
           initialMembers={members}
           initialMessages={chatMessages}
+          initialAdminVote={adminVote}
         />
       </div>
     </div>

@@ -412,17 +412,22 @@ class CampusReunionStore {
       throw new Error("Poll not found");
     }
 
-    if (poll.status !== "open") {
-      throw new Error(`Voting is currently ${poll.status}`);
-    }
-
-    if (new Date(poll.voting_deadline).getTime() < Date.now()) {
-      throw new Error("The voting deadline has expired");
-    }
-
     const userProfile = this.profiles.find((p) => p.id === userId);
+    const isAdmin = userProfile?.role === "admin";
+
     if (userProfile && userProfile.is_active === false) {
       throw new Error("Your account has been deactivated by the administrator.");
+    }
+
+    // Administrators can vote in any poll regardless of status or deadline
+    if (!isAdmin) {
+      if (poll.status !== "open") {
+        throw new Error(`Voting is currently ${poll.status}`);
+      }
+
+      if (new Date(poll.voting_deadline).getTime() < Date.now()) {
+        throw new Error("The voting deadline has expired");
+      }
     }
 
     const option = this.pollOptions.find((po) => po.id === optionId && po.poll_id === pollId);

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Poll, PollResults, PollOption, PublicProfile, ChatMessage } from "@/types";
+import { Poll, PollResults, PollOption, PublicProfile, ChatMessage, Vote } from "@/types";
 import { formatDisplayDate, formatWithDay, formatChatTime } from "@/lib/utils/date";
 import { 
   ShieldAlert, 
@@ -17,7 +17,10 @@ import {
   Scale, 
   MessageSquare,
   Users,
-  Trophy
+  Trophy,
+  Vote as VoteIcon,
+  ShieldCheck,
+  ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreatePollModal } from "@/components/admin/CreatePollModal";
 import { AdminDateCustomizer } from "@/components/admin/AdminDateCustomizer";
 import { MemberManagementCard } from "@/components/admin/MemberManagementCard";
+import { VoteConfirmationModal } from "@/components/polling/VoteConfirmationModal";
 import { toast } from "sonner";
 
 interface AdminClientPageProps {
@@ -39,6 +43,7 @@ interface AdminClientPageProps {
   initialOptions: PollOption[];
   initialMembers: PublicProfile[];
   initialMessages: ChatMessage[];
+  initialAdminVote?: Vote | null;
 }
 
 export function AdminClientPage({
@@ -48,13 +53,20 @@ export function AdminClientPage({
   initialOptions,
   initialMembers,
   initialMessages,
+  initialAdminVote,
 }: AdminClientPageProps) {
   const [poll, setPoll] = useState<Poll>(initialPoll);
   const [results, setResults] = useState<PollResults>(initialResults);
   const [options, setOptions] = useState<PollOption[]>(initialOptions);
   const [members, setMembers] = useState<PublicProfile[]>(initialMembers);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [adminVote, setAdminVote] = useState<Vote | null>(initialAdminVote || null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [showAdminVoteModal, setShowAdminVoteModal] = useState(false);
+  const [selectedAdminVoteOptionId, setSelectedAdminVoteOptionId] = useState<string>(
+    initialAdminVote?.option_id || initialOptions[0]?.id || ""
+  );
+  const [isSubmittingAdminVote, setIsSubmittingAdminVote] = useState(false);
 
   const [pollStatus, setPollStatus] = useState(poll.status);
   const [votingDeadline, setVotingDeadline] = useState(
@@ -67,6 +79,53 @@ export function AdminClientPage({
   const [tieSelectedDate, setTieSelectedDate] = useState("");
   const [tieNote, setTieNote] = useState("");
   const [isResolvingTie, setIsResolvingTie] = useState(false);
+
+  // Admin vote handler
+  const handleAdminVoteSubmit = async (reasonText: string) => {
+    if (!selectedAdminVoteOptionId) {
+      toast.error("Please pick a date option");
+      return;
+    }
+
+    try {
+      setIsSubmittingAdminVote(true);
+      const res = await fetch("/api/poll/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          poll_id: poll.id,
+          option_id: selectedAdminVoteOptionId,
+          reason: reasonText || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to record administrator vote");
+      }
+
+      setAdminVote({
+        id: data.result.vote_id,
+        poll_id: poll.id,
+        option_id: selectedAdminVoteOptionId,
+        user_id: user.id,
+        reason: data.result.reason || reasonText || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+      if (data.results) {
+        setResults(data.results);
+      }
+
+      setShowAdminVoteModal(false);
+      toast.success("Administrator vote saved & counted in live poll tally! 🎓");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to record vote");
+    } finally {
+      setIsSubmittingAdminVote(false);
+    }
+  };
 
   // Update Config
   const handleSaveConfig = async () => {
@@ -359,6 +418,87 @@ export function AdminClientPage({
               </div>
             </div>
           </Card>
+
+          {/* Administrator Vote on this Poll */}
+          <Card className="rounded-3xl border-indigo-200/90 dark:border-indigo-800/80 bg-white dark:bg-slate-900 shadow-sm p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <VoteIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                  Your Admin Vote on this Poll
+                </h3>
+              </div>
+              <Badge variant="amber" className="text-[10px] py-0 px-2 font-bold">
+                Admin Privilege
+              </Badge>
+            </div>
+
+            {adminVote && options.find((o) => o.id === adminVote.option_id) ? (
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block">
+                      Recorded Choice:
+                    </span>
+                    <span className="font-black text-base text-slate-900 dark:text-slate-100">
+                      {formatDisplayDate(options.find((o) => o.id === adminVote.option_id)!.option_date)}
+                    </span>
+                  </div>
+                  <Badge variant="success" className="text-xs font-bold">
+                    Active & Counted
+                  </Badge>
+                </div>
+
+                {adminVote.reason && (
+                  <div className="text-xs text-slate-600 dark:text-slate-300 bg-indigo-50/60 dark:bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-800 flex items-start gap-1.5">
+                    <span className="text-indigo-600 dark:text-indigo-400 font-bold shrink-0">💬 Note:</span>
+                    <span className="italic leading-snug">&ldquo;{adminVote.reason}&rdquo;</span>
+                  </div>
+                )}
+
+                <div className="pt-2 flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedAdminVoteOptionId(adminVote.option_id);
+                      setShowAdminVoteModal(true);
+                    }}
+                    className="w-full text-xs h-8 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950 font-bold"
+                  >
+                    Change / Update Admin Vote
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Admins can vote on any poll in any status (draft, open, or closed). Your vote will be officially counted in the live tally.
+                </p>
+                <div className="space-y-2">
+                  <select
+                    className="w-full rounded-xl border border-slate-300 dark:border-slate-700 p-2 text-xs bg-white dark:bg-slate-800 font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                    value={selectedAdminVoteOptionId}
+                    onChange={(e) => setSelectedAdminVoteOptionId(e.target.value)}
+                  >
+                    {options.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {formatWithDay(opt.option_date)} {opt.label ? `(${opt.label})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowAdminVoteModal(true)}
+                    className="w-full text-xs h-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                  >
+                    <VoteIcon className="h-3.5 w-3.5 mr-1.5" />
+                    Cast Administrator Vote
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Card>
         </div>
 
         {/* Right Column: Manage & Customize Date Options */}
@@ -439,6 +579,22 @@ export function AdminClientPage({
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
       />
+
+      {/* Admin Vote Modal */}
+      {showAdminVoteModal && (
+        <VoteConfirmationModal
+          isOpen={showAdminVoteModal}
+          onClose={() => setShowAdminVoteModal(false)}
+          onConfirm={handleAdminVoteSubmit}
+          selectedDate={options.find((o) => o.id === selectedAdminVoteOptionId)?.option_date || options[0]?.option_date || "2026-11-25"}
+          label={options.find((o) => o.id === selectedAdminVoteOptionId)?.label}
+          note={options.find((o) => o.id === selectedAdminVoteOptionId)?.note}
+          isRecommended={options.find((o) => o.id === selectedAdminVoteOptionId)?.is_recommended}
+          currentReason={adminVote?.reason || ""}
+          isUpdate={!!adminVote}
+          isLoading={isSubmittingAdminVote}
+        />
+      )}
     </div>
   );
 }

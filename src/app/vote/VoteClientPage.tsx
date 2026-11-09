@@ -53,8 +53,9 @@ export function VoteClientPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  const isClosed = poll.status === "closed" || poll.status === "finalized";
-  const deadlinePassed = new Date(poll.voting_deadline).getTime() < Date.now();
+  const isAdmin = user.role === "admin";
+  const isClosed = !isAdmin && (poll.status === "closed" || poll.status === "finalized");
+  const deadlinePassed = !isAdmin && new Date(poll.voting_deadline).getTime() < Date.now();
 
   const currentOption = options.find((o) => o.id === selectedOptionId);
   const votedOption = options.find((o) => o.id === userVote?.option_id);
@@ -192,8 +193,23 @@ export function VoteClientPage({
         </div>
       )}
 
-      {/* Closed warning */}
-      {(isClosed || deadlinePassed) && (
+      {/* Admin Override Notification */}
+      {isAdmin && (poll.status !== "open" || new Date(poll.voting_deadline).getTime() < Date.now()) && (
+        <div className="rounded-2xl border border-amber-300 dark:border-amber-700 bg-amber-50/80 dark:bg-amber-950/40 p-4 text-xs text-amber-900 dark:text-amber-200 flex items-center justify-between gap-3 animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-amber-600 shrink-0" />
+            <span>
+              <strong>Administrator Access:</strong> You can vote and test preferences on any poll regardless of status ({poll.status}) or deadline.
+            </span>
+          </div>
+          <Badge variant="amber" className="text-[10px] py-0.5 px-2 font-bold shrink-0">
+            Admin Voting Permitted
+          </Badge>
+        </div>
+      )}
+
+      {/* Member Closed warning */}
+      {!isAdmin && (isClosed || deadlinePassed) && (
         <div className="rounded-2xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-4 text-xs text-rose-800 dark:text-rose-200 flex items-center gap-2">
           <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
           <span>
@@ -412,7 +428,7 @@ export function VoteClientPage({
           <Button
             size="lg"
             className="w-full sm:w-auto px-8 bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-500/20"
-            disabled={isClosed || deadlinePassed || isSubmitting || !selectedOptionId}
+            disabled={(!isAdmin && (isClosed || deadlinePassed)) || isSubmitting || !selectedOptionId}
             onClick={() => setShowConfirmModal(true)}
           >
             {userVote ? "Update My Vote" : "Submit Official Vote"}
