@@ -223,26 +223,14 @@ export default function LandingPage() {
         <div className="lg:col-span-5">
           <Card className="rounded-3xl border-slate-200/80 shadow-xl bg-white/95 backdrop-blur-sm">
             <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white rounded-t-3xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-inner">
-                    <GraduationCap className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold tracking-tight">Join the Reunion</h2>
-                    <p className="text-xs text-indigo-100">B.Tech Batchmates</p>
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-inner">
+                  <GraduationCap className="h-6 w-6 text-white" />
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => setIsAdminModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/15 hover:bg-white/25 text-white border border-white/20 transition-colors shadow-2xs"
-                  title="Admin Portal Login"
-                >
-                  <Shield className="h-3 w-3 text-amber-300" />
-                  <span>Admin</span>
-                </button>
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight">Join the Reunion</h2>
+                  <p className="text-xs text-indigo-100">B.Tech Batchmates</p>
+                </div>
               </div>
             </div>
 
@@ -481,18 +469,11 @@ export default function LandingPage() {
               </form>
 
               {/* Bottom Info Bar without Quick Profiles */}
-              <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                <span className="flex items-center gap-1">
+              <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-center text-[11px] text-slate-500">
+                <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                   No password required for batchmates
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setIsAdminModalOpen(true)}
-                  className="font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
-                >
-                  Admin Login →
-                </button>
               </div>
             </CardContent>
           </Card>
