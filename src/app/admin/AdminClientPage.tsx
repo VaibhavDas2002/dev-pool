@@ -25,6 +25,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { CreatePollModal } from "@/components/admin/CreatePollModal";
 import { AdminDateCustomizer } from "@/components/admin/AdminDateCustomizer";
+import { MemberManagementCard } from "@/components/admin/MemberManagementCard";
 import { toast } from "sonner";
 
 interface AdminClientPageProps {
@@ -179,18 +180,18 @@ export function AdminClientPage({
       <div>
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-indigo-600 transition-colors mb-2"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors mb-2"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Back to Dashboard</span>
         </Link>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-2.5">
-              <ShieldAlert className="h-7 w-7 text-indigo-600" />
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
+              <ShieldAlert className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
               Admin Command Center
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Class Representative controls for dates, deadlines, tie-breaks, and batch moderation
             </p>
           </div>
@@ -200,9 +201,9 @@ export function AdminClientPage({
               variant="outline"
               size="sm"
               onClick={() => setIsCreateModalOpen(true)}
-              className="bg-white hover:bg-indigo-50 text-indigo-700 border-indigo-200 text-xs font-bold shadow-2xs"
+              className="bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 text-xs font-bold shadow-2xs"
             >
-              <Plus className="h-3.5 w-3.5 mr-1 text-indigo-600" />
+              <Plus className="h-3.5 w-3.5 mr-1 text-indigo-600 dark:text-indigo-400" />
               Create New Poll
             </Button>
             <Badge variant="amber" className="text-xs px-3 py-1 font-bold">
@@ -279,21 +280,21 @@ export function AdminClientPage({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Poll Configuration */}
         <div className="lg:col-span-5 space-y-6">
-          <Card className="rounded-3xl border-slate-200 bg-white shadow-sm">
-            <CardHeader className="p-6 pb-4 border-b border-slate-100">
-              <CardTitle className="text-lg font-bold">Poll Status & Deadline</CardTitle>
-              <CardDescription className="text-xs">
+          <Card className="rounded-3xl border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">Poll Status & Deadline</CardTitle>
+              <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
                 Control whether voting is active, closed, or officially finalized
               </CardDescription>
             </CardHeader>
 
             <CardContent className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                   Poll Status
                 </label>
                 <select
-                  className="w-full rounded-xl border border-slate-300 p-2.5 text-sm bg-white font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 p-2.5 text-sm bg-white dark:bg-slate-800 font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
                   value={pollStatus}
                   onChange={(e) => setPollStatus(e.target.value as any)}
                 >
@@ -305,12 +306,12 @@ export function AdminClientPage({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                   Voting Deadline (Asia/Kolkata)
                 </label>
                 <input
                   type="datetime-local"
-                  className="w-full rounded-xl border border-slate-300 p-2.5 text-sm bg-white font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 p-2.5 text-sm bg-white dark:bg-slate-800 font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"
                   value={votingDeadline}
                   onChange={(e) => setVotingDeadline(e.target.value)}
                 />
@@ -341,20 +342,20 @@ export function AdminClientPage({
           </Card>
 
           {/* Quick Stats Summary */}
-          <Card className="rounded-3xl border-slate-200 bg-white shadow-sm p-6 space-y-4">
-            <h3 className="font-bold text-sm text-slate-900">Participation Overview</h3>
+          <Card className="rounded-3xl border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-6 space-y-4">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Participation Overview</h3>
             <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
                 <p className="text-xs text-slate-400 font-semibold">Members</p>
-                <p className="text-xl font-black text-slate-800">{members.length}</p>
+                <p className="text-xl font-black text-slate-800 dark:text-slate-100">{members.length}</p>
               </div>
-              <div className="p-3 rounded-2xl bg-indigo-50 border border-indigo-100">
+              <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800">
                 <p className="text-xs text-indigo-500 font-semibold">Votes</p>
-                <p className="text-xl font-black text-indigo-700">{results.total_votes}</p>
+                <p className="text-xl font-black text-indigo-700 dark:text-indigo-300">{results.total_votes}</p>
               </div>
-              <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-100">
+              <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-100 dark:border-emerald-800">
                 <p className="text-xs text-emerald-500 font-semibold">Turnout</p>
-                <p className="text-xl font-black text-emerald-700">{results.turnout_percentage}%</p>
+                <p className="text-xl font-black text-emerald-700 dark:text-emerald-300">{results.turnout_percentage}%</p>
               </div>
             </div>
           </Card>
@@ -377,14 +378,21 @@ export function AdminClientPage({
         </div>
       </div>
 
+      {/* Batchmate & Member Access Control (Active / Inactive) */}
+      <MemberManagementCard
+        members={members}
+        currentUserId={user.id}
+        onMembersUpdate={(updated) => setMembers(updated)}
+      />
+
       {/* Chat Moderation Feed */}
-      <Card className="rounded-3xl border-slate-200 bg-white shadow-sm p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+      <Card className="rounded-3xl border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
           <div className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-indigo-600" />
-            <h3 className="font-bold text-base text-slate-900">Live Chat Moderation</h3>
+            <MessageSquare className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">Live Chat Moderation</h3>
           </div>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-slate-400 dark:text-slate-500">
             Admins can delete any inappropriate message
           </span>
         </div>
@@ -394,18 +402,20 @@ export function AdminClientPage({
             <div
               key={m.id}
               className={`p-3 rounded-xl border flex items-center justify-between gap-3 ${
-                m.is_deleted ? "bg-slate-50 border-slate-100 opacity-60" : "bg-white border-slate-200"
+                m.is_deleted
+                  ? "bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800 opacity-60"
+                  : "bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700"
               }`}
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-xs text-slate-800">{m.sender_name}</span>
+                  <span className="font-bold text-xs text-slate-800 dark:text-slate-200">{m.sender_name}</span>
                   <span className="text-[10px] text-slate-400">{formatChatTime(m.created_at)}</span>
                   {m.is_deleted && (
                     <span className="text-[10px] text-rose-500 font-semibold italic">Deleted</span>
                   )}
                 </div>
-                <p className="text-xs text-slate-600 truncate mt-0.5">{m.message}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-300 truncate mt-0.5">{m.message}</p>
               </div>
 
               {!m.is_deleted && (
@@ -413,7 +423,7 @@ export function AdminClientPage({
                   variant="ghost"
                   size="sm"
                   onClick={() => handleModerateMessage(m.id)}
-                  className="text-xs text-rose-600 hover:bg-rose-50 h-8 px-2"
+                  className="text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 h-8 px-2"
                 >
                   <Trash2 className="h-3.5 w-3.5 mr-1" />
                   Moderate

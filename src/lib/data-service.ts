@@ -361,6 +361,55 @@ export const dataService = {
   },
 
   /**
+   * Toggle or update member active / inactive status (Admin only)
+   */
+  async updateMemberStatus(
+    userId: string,
+    isActive: boolean,
+    actorId: string
+  ): Promise<Profile> {
+    if (!isSupabaseConfigured()) {
+      return mockStore.toggleMemberStatus(userId, actorId, isActive);
+    }
+
+    const supabase = createAdminClient();
+    const { data: target } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (!target) throw new Error("Member not found");
+    if (target.role === "admin" && target.mobile_number === "6297977842" && !isActive) {
+      throw new Error("Primary Administrator account cannot be deactivated");
+    }
+    if (userId === actorId && !isActive) {
+      throw new Error("You cannot deactivate your own admin account");
+    }
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ is_active: isActive, updated_at: new Date().toISOString() })
+      .eq("id", userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.warn("Supabase updateMemberStatus fallback:", error);
+      return mockStore.toggleMemberStatus(userId, actorId, isActive);
+    }
+
+    await supabase.from("poll_audit_logs").insert({
+      actor_id: actorId,
+      action: "UPDATE_MEMBER_STATUS",
+      old_value: { userId, is_active: target.is_active },
+      new_value: { userId, is_active: isActive },
+    });
+
+    return data as Profile;
+  },
+
+  /**
    * Get group chat messages
    */
   async getChatMessages(): Promise<ChatMessage[]> {

@@ -9,15 +9,25 @@
   --radius: 1rem;
 }
 
+.dark {
+  --background: #090d16;
+  --foreground: #f1f5f9;
+  --surface: #111827;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
   font-feature-settings: "rlig" 1, "calt" 1;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 @layer base {
   * {
     border-color: #e2e8f0;
+  }
+  .dark * {
+    border-color: #1e293b;
   }
 }
 

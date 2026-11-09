@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { DemoModeBanner } from "@/components/layout/DemoModeBanner";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { getSessionUser } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -35,20 +36,41 @@ export default async function RootLayout({
   const sessionUser = await getSessionUser();
 
   return (
-    <html lang="en">
-      <body className="min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white bg-slate-50 text-slate-900">
-        <DemoModeBanner />
-        <Navbar user={sessionUser} />
-        {/* Main content wrapper with mobile tab bar padding */}
-        <main className={`flex-1 ${sessionUser ? "pb-24 md:pb-0" : ""}`}>
-          {children}
-        </main>
-        {/* Hide web footer on mobile when bottom app bar is active */}
-        <div className={sessionUser ? "hidden md:block" : ""}>
-          <Footer />
-        </div>
-        <MobileBottomNav user={sessionUser} />
-        <Toaster position="top-right" richColors />
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var saved = localStorage.getItem('campus_poll_theme');
+                  var isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                  if (isDark) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
+        <ThemeProvider>
+          <DemoModeBanner />
+          <Navbar user={sessionUser} />
+          {/* Main content wrapper with mobile tab bar padding */}
+          <main className={`flex-1 ${sessionUser ? "pb-24 md:pb-0" : ""}`}>
+            {children}
+          </main>
+          {/* Hide web footer on mobile when bottom app bar is active */}
+          <div className={sessionUser ? "hidden md:block" : ""}>
+            <Footer />
+          </div>
+          <MobileBottomNav user={sessionUser} />
+          <Toaster position="top-right" richColors />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -176,6 +176,8 @@ export function DashboardClientContent({
                   isSelected={isSelected}
                   isLeading={isLeading}
                   isClosed={isClosed}
+                  voters={optResult?.voters || []}
+                  currentUser={user}
                   onVote={handleVote}
                 />
               );

@@ -15,10 +15,12 @@ import {
   Clock, 
   Vote as VoteIcon,
   AlertCircle,
-  Star 
+  Star,
+  Users 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getInitials, getAvatarStyle } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface VoteClientPageProps {
@@ -152,18 +154,31 @@ export function VoteClientPage({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Interactive Month Calendar */}
         <div className="lg:col-span-5 space-y-3">
-          <CalendarView
-            availableDates={options.map((o) => o.option_date)}
-            selectedDate={currentOption?.option_date || null}
-            leadingDate={results.leading_date || null}
-            isClosed={isClosed || deadlinePassed}
-            onSelectDate={(dateStr) => {
-              const matched = options.find((o) => o.option_date === dateStr);
-              if (matched) setSelectedOptionId(matched.id);
-            }}
-          />
-          <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100 text-xs text-indigo-900 flex items-start gap-2">
-            <Info className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
+          {(() => {
+            const votersByDate: Record<string, import("@/types").OptionVoter[]> = {};
+            results.options.forEach((opt) => {
+              votersByDate[opt.option_date] = opt.voters || [];
+            });
+
+            return (
+              <CalendarView
+                availableDates={options.map((o) => o.option_date)}
+                selectedDate={currentOption?.option_date || null}
+                leadingDate={results.leading_date || null}
+                isClosed={isClosed || deadlinePassed}
+                votersByDate={votersByDate}
+                currentUserInitials={getInitials(user.full_name)}
+                currentUserId={user.id}
+                hasConfirmedVote={!!userVote}
+                onSelectDate={(dateStr) => {
+                  const matched = options.find((o) => o.option_date === dateStr);
+                  if (matched) setSelectedOptionId(matched.id);
+                }}
+              />
+            );
+          })()}
+          <div className="p-3.5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800 text-xs text-indigo-900 dark:text-indigo-200 flex items-start gap-2">
+            <Info className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
             <span>
               Click on any highlighted date in the calendar or select from the cards on the right.
             </span>
@@ -171,10 +186,10 @@ export function VoteClientPage({
         </div>
 
         {/* Right Column: Date Cards */}
-        <div className="lg:col-span-7 rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm space-y-6">
+        <div className="lg:col-span-7 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-sm space-y-6">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Choose Your Preferred Date</h2>
-            <p className="text-xs text-slate-500">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Choose Your Preferred Date</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               All selectable dates are scheduled on or after November 25, 2026.
             </p>
           </div>
@@ -188,6 +203,7 @@ export function VoteClientPage({
             const isRecommended = option.is_recommended ?? optResult?.is_recommended;
             const label = option.label || optResult?.label;
             const note = option.note || optResult?.note;
+            const voters = optResult?.voters || [];
 
             return (
               <div
@@ -195,23 +211,23 @@ export function VoteClientPage({
                 onClick={() => !isClosed && setSelectedOptionId(option.id)}
                 className={`relative flex flex-col justify-between p-5 rounded-2xl border-2 cursor-pointer transition-all ${
                   isChecked
-                    ? "border-indigo-600 bg-indigo-50/50 shadow-sm"
+                    ? "border-indigo-600 dark:border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/40 shadow-sm"
                     : isRecommended
-                    ? "border-amber-200/80 bg-gradient-to-b from-amber-50/20 to-white hover:border-amber-300"
-                    : "border-slate-200 hover:border-indigo-300 hover:bg-slate-50/60"
+                    ? "border-amber-200/80 dark:border-amber-800/80 bg-gradient-to-b from-amber-50/20 dark:from-amber-950/20 to-white dark:to-slate-900 hover:border-amber-300"
+                    : "border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-slate-50/60 dark:hover:bg-slate-800/50"
                 } ${isClosed ? "cursor-not-allowed opacity-80" : ""}`}
               >
                 <div>
                   {/* Badges row */}
                   <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
                     {isRecommended && (
-                      <Badge className="bg-amber-50 text-amber-900 border border-amber-300/80 text-[10px] gap-1 font-bold py-0.5">
+                      <Badge className="bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300/80 dark:border-amber-800 text-[10px] gap-1 font-bold py-0.5">
                         <Star className="h-2.5 w-2.5 fill-amber-500 text-amber-600" />
                         Recommended
                       </Badge>
                     )}
                     {label && (
-                      <Badge variant="outline" className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border-indigo-200 py-0.5">
+                      <Badge variant="outline" className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/70 border-indigo-200 dark:border-indigo-800 py-0.5">
                         {label}
                       </Badge>
                     )}
@@ -223,16 +239,16 @@ export function VoteClientPage({
                         className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
                           isChecked
                             ? "border-indigo-600 bg-indigo-600 text-white"
-                            : "border-slate-300 bg-white"
+                            : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
                         }`}
                       >
                         {isChecked && <CheckCircle2 className="h-4 w-4" />}
                       </div>
                       <div>
-                        <span className="text-lg font-black text-slate-900 block">
+                        <span className="text-lg font-black text-slate-900 dark:text-slate-100 block">
                           {formatDisplayDate(option.option_date)}
                         </span>
-                        <span className="text-xs font-semibold text-slate-500">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                           {formatWithDay(option.option_date).split(",")[0]}
                         </span>
                       </div>
@@ -241,26 +257,68 @@ export function VoteClientPage({
                     <div className="flex flex-col items-end gap-1">
                       {isAlreadyVoted && (
                         <Badge variant="default" className="text-[10px] bg-indigo-600">
-                          Current Selection
+                          Selection ({getInitials(user.full_name)})
                         </Badge>
                       )}
-                      <span className="text-xs font-bold text-slate-500">
+                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                         {votesCount} {votesCount === 1 ? "vote" : "votes"}
                       </span>
                     </div>
                   </div>
 
                   {note && (
-                    <div className="mb-3 rounded-xl bg-slate-50 border border-slate-200/70 p-2.5 text-[11px] text-slate-600 flex items-start gap-1.5">
-                      <span className="text-indigo-600 font-bold shrink-0">💡</span>
+                    <div className="mb-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 p-2.5 text-[11px] text-slate-600 dark:text-slate-300 flex items-start gap-1.5">
+                      <span className="text-indigo-600 dark:text-indigo-400 font-bold shrink-0">💡</span>
                       <span>{note}</span>
+                    </div>
+                  )}
+
+                  {/* Voter initials stack */}
+                  {voters && voters.length > 0 && (
+                    <div className="mb-3 p-2 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex -space-x-1.5 overflow-hidden">
+                          {voters.slice(0, 4).map((voter, idx) => (
+                            <div
+                              key={voter.user_id + idx}
+                              style={getAvatarStyle(voter.full_name)}
+                              className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-black text-white ring-1 ring-white dark:ring-slate-900 ${
+                                voter.user_id === user.id ? "scale-110 z-10 ring-indigo-500" : ""
+                              }`}
+                              title={voter.full_name + (voter.user_id === user.id ? " (You)" : "")}
+                            >
+                              {voter.initials}
+                            </div>
+                          ))}
+                        </div>
+                        {voters.length > 4 && (
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                            +{voters.length - 4}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400">
+                        {voters.length} voted
+                      </span>
+                    </div>
+                  )}
+
+                  {isAlreadyVoted && (
+                    <div className="mb-3 flex items-center gap-2 p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-[11px] font-bold text-indigo-900 dark:text-indigo-200">
+                      <div
+                        style={getAvatarStyle(user.full_name)}
+                        className="h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-2xs"
+                      >
+                        {getInitials(user.full_name)}
+                      </div>
+                      <span>Your vote confirmed!</span>
                     </div>
                   )}
                 </div>
 
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
                   <span>Batchmate Gathering</span>
-                  <span className="text-indigo-600 font-semibold">{optResult?.percentage || 0}%</span>
+                  <span className="text-indigo-600 dark:text-indigo-400 font-semibold">{optResult?.percentage || 0}%</span>
                 </div>
               </div>
             );

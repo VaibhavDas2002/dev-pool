@@ -78,6 +78,14 @@ export async function POST(req: NextRequest) {
     // Create or retrieve profile
     const profile = await dataService.findOrCreateProfile(full_name, mobile_number);
 
+    // Check if account has been deactivated by admin
+    if (profile.is_active === false) {
+      return NextResponse.json(
+        { error: "Your account has been deactivated by the administrator. Please contact Vaibhav Das." },
+        { status: 403 }
+      );
+    }
+
     // Set secure HTTP-only signed session cookie
     await setSessionCookie({
       id: profile.id,

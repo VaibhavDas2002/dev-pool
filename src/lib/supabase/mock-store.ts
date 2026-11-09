@@ -7,8 +7,10 @@ import {
   ChatMessage, 
   Announcement, 
   PublicProfile,
-  PollAuditLog 
+  PollAuditLog,
+  OptionVoter 
 } from "@/types";
+import { getInitials } from "@/lib/utils";
 
 // In-memory persistent state during server runtime
 class CampusReunionStore {
@@ -299,15 +301,47 @@ class CampusReunionStore {
     const defaultPoll = this.polls[0];
     return this.profiles.map((p) => {
       const vote = this.votes.find((v) => v.user_id === p.id && v.poll_id === defaultPoll?.id);
+      const votedOption = vote ? this.pollOptions.find((po) => po.id === vote.option_id) : undefined;
       return {
         id: p.id,
         full_name: p.full_name,
         role: p.role,
+        is_active: p.is_active !== false,
         created_at: p.created_at,
         has_voted: !!vote,
         voted_option_id: vote ? vote.option_id : null,
+        voted_date: votedOption ? votedOption.option_date : null,
       };
     });
+  }
+
+  public toggleMemberStatus(userId: string, actorId: string, isActive?: boolean): Profile {
+    const profile = this.profiles.find((p) => p.id === userId);
+    if (!profile) throw new Error("Member profile not found");
+
+    if (profile.role === "admin" && profile.mobile_number === "6297977842" && isActive === false) {
+      throw new Error("Primary Administrator account cannot be deactivated");
+    }
+
+    if (userId === actorId && isActive === false) {
+      throw new Error("You cannot deactivate your own admin account");
+    }
+
+    const newStatus = isActive !== undefined ? isActive : profile.is_active === false;
+    profile.is_active = newStatus;
+    profile.updated_at = new Date().toISOString();
+
+    this.auditLogs.push({
+      id: "aud_" + Math.random().toString(36).substring(2, 9),
+      poll_id: this.polls[0]?.id || "b0000000-0000-0000-0000-000000000001",
+      actor_id: actorId,
+      action: "UPDATE_MEMBER_STATUS",
+      old_value: { userId, is_active: !newStatus },
+      new_value: { userId, is_active: newStatus },
+      created_at: new Date().toISOString(),
+    });
+
+    return profile;
   }
 
   // ==================== POLLS & OPTIONS ====================
@@ -385,6 +419,11 @@ class CampusReunionStore {
       throw new Error("The voting deadline has expired");
     }
 
+    const userProfile = this.profiles.find((p) => p.id === userId);
+    if (userProfile && userProfile.is_active === false) {
+      throw new Error("Your account has been deactivated by the administrator.");
+    }
+
     const option = this.pollOptions.find((po) => po.id === optionId && po.poll_id === pollId);
     if (!option) {
       throw new Error("Invalid date option selected for this poll");
@@ -431,8 +470,19 @@ class CampusReunionStore {
 
     // Count per option
     const optionResults = options.map((opt) => {
-      const count = votesForPoll.filter((v) => v.option_id === opt.id).length;
+      const optionVotes = votesForPoll.filter((v) => v.option_id === opt.id);
+      const count = optionVotes.length;
       const percentage = totalVotes > 0 ? Number(((count / totalVotes) * 100).toFixed(1)) : 0;
+      const voters: OptionVoter[] = optionVotes.map((v) => {
+        const prof = this.profiles.find((p) => p.id === v.user_id);
+        const name = prof?.full_name || "Batchmate";
+        return {
+          user_id: v.user_id,
+          full_name: name,
+          initials: getInitials(name),
+          role: prof?.role || "member",
+        };
+      });
       return {
         option_id: opt.id,
         option_date: opt.option_date,
@@ -441,6 +491,7 @@ class CampusReunionStore {
         is_recommended: opt.is_recommended,
         vote_count: count,
         percentage,
+        voters,
       };
     });
 

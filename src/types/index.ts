@@ -7,6 +7,7 @@ export interface Profile {
   full_name: string;
   mobile_number: string;
   role: UserRole;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -15,9 +16,11 @@ export interface PublicProfile {
   id: string;
   full_name: string;
   role: UserRole;
+  is_active?: boolean;
   created_at: string;
   has_voted: boolean;
   voted_option_id?: string | null;
+  voted_date?: string | null;
 }
 
 export interface Poll {
@@ -57,6 +60,13 @@ export interface Vote {
   updated_at: string;
 }
 
+export interface OptionVoter {
+  user_id: string;
+  full_name: string;
+  initials: string;
+  role: UserRole;
+}
+
 export interface OptionResult {
   option_id: string;
   option_date: string;
@@ -65,6 +75,7 @@ export interface OptionResult {
   is_recommended?: boolean;
   vote_count: number;
   percentage: number;
+  voters?: OptionVoter[];
 }
 
 export interface TiedOption {

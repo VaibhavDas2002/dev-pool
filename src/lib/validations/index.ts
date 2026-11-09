@@ -136,3 +136,10 @@ export const createPollSchema = z.object({
 
 export type CreatePollInput = z.infer<typeof createPollSchema>;
 
+export const updateMemberStatusSchema = z.object({
+  user_id: z.string().min(1),
+  is_active: z.boolean(),
+});
+
+export type UpdateMemberStatusInput = z.infer<typeof updateMemberStatusSchema>;
+

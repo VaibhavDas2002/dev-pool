@@ -7,6 +7,7 @@ import {
   batchSyncDateOptionsSchema,
   tieResolutionSchema,
   createPollSchema,
+  updateMemberStatusSchema,
 } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
@@ -111,6 +112,20 @@ export async function POST(req: NextRequest) {
       if (!poll_id) return NextResponse.json({ error: "Poll ID is required" }, { status: 400 });
       const finalizedPoll = await dataService.finalizePoll(poll_id, selected_date, user.id);
       return NextResponse.json({ success: true, poll: finalizedPoll });
+    }
+
+    if (action === "TOGGLE_MEMBER_STATUS") {
+      const validation = updateMemberStatusSchema.safeParse(body);
+      if (!validation.success) {
+        return NextResponse.json({ error: validation.error.errors[0]?.message }, { status: 400 });
+      }
+      const updatedProfile = await dataService.updateMemberStatus(
+        validation.data.user_id,
+        validation.data.is_active,
+        user.id
+      );
+      const publicMembers = await dataService.getPublicMembers();
+      return NextResponse.json({ success: true, profile: updatedProfile, members: publicMembers });
     }
 
     return NextResponse.json({ error: "Unsupported admin action" }, { status: 400 });

@@ -10,6 +10,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized. Please join or log in first." }, { status: 401 });
     }
 
+    const userProfile = await dataService.getProfileById(user.id);
+    if (userProfile && userProfile.is_active === false) {
+      return NextResponse.json(
+        { error: "Your account has been deactivated by the administrator." },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const validation = voteSchema.safeParse(body);
 
