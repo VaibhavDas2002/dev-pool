@@ -297,9 +297,14 @@ class CampusReunionStore {
     return newProfile;
   }
 
-  public getPublicMembers(): PublicProfile[] {
+  public getActiveProfiles(): Profile[] {
+    return this.profiles.filter((p) => p.is_active !== false);
+  }
+
+  public getPublicMembers(onlyActive = false): PublicProfile[] {
     const defaultPoll = this.polls[0];
-    return this.profiles.map((p) => {
+    const sourceProfiles = onlyActive ? this.profiles.filter((p) => p.is_active !== false) : this.profiles;
+    return sourceProfiles.map((p) => {
       const vote = this.votes.find((v) => v.user_id === p.id && v.poll_id === defaultPoll?.id);
       const votedOption = vote ? this.pollOptions.find((po) => po.id === vote.option_id) : undefined;
       return {
@@ -556,25 +561,30 @@ class CampusReunionStore {
     const options = this.getPollOptions(pollId);
     const votesForPoll = this.votes.filter((v) => v.poll_id === pollId);
     const totalVotes = votesForPoll.length;
-    const totalMembers = this.profiles.length;
+    const totalMembers = this.profiles.filter((p) => p.is_active !== false).length;
 
     // Count per option
     const optionResults = options.map((opt) => {
       const optionVotes = votesForPoll.filter((v) => v.option_id === opt.id);
       const count = optionVotes.length;
       const percentage = totalVotes > 0 ? Number(((count / totalVotes) * 100).toFixed(1)) : 0;
-      const voters: OptionVoter[] = optionVotes.map((v) => {
-        const prof = this.profiles.find((p) => p.id === v.user_id);
-        const name = prof?.full_name || "Batchmate";
-        return {
-          user_id: v.user_id,
-          full_name: name,
-          initials: getInitials(name),
-          role: prof?.role || "member",
-          reason: v.reason || null,
-          voted_at: v.updated_at || v.created_at,
-        };
-      });
+      const voters: OptionVoter[] = optionVotes
+        .filter((v) => {
+          const prof = this.profiles.find((p) => p.id === v.user_id);
+          return !prof || prof.is_active !== false;
+        })
+        .map((v) => {
+          const prof = this.profiles.find((p) => p.id === v.user_id);
+          const name = prof?.full_name || "Batchmate";
+          return {
+            user_id: v.user_id,
+            full_name: name,
+            initials: getInitials(name),
+            role: prof?.role || "member",
+            reason: v.reason || null,
+            voted_at: v.updated_at || v.created_at,
+          };
+        });
       return {
         option_id: opt.id,
         option_date: opt.option_date,

@@ -75,42 +75,57 @@ export const dataService = {
   },
 
   /**
-   * Get all registered profiles for fast client onboarding autocomplete
+   * Get all registered active profiles for fast client onboarding autocomplete
+   * Inactive / deactivated members are strictly excluded.
    */
-  async getSavedProfiles(): Promise<Array<{ id: string; full_name: string; mobile_number: string; role: UserRole }>> {
+  async getSavedProfiles(): Promise<Array<{ id: string; full_name: string; mobile_number: string; role: UserRole; is_active?: boolean }>> {
     if (!isSupabaseConfigured()) {
-      return mockStore.getAllProfiles().map((p) => ({
-        id: p.id,
-        full_name: p.full_name,
-        mobile_number: p.mobile_number,
-        role: p.role,
-      }));
+      return mockStore
+        .getAllProfiles()
+        .filter((p) => p.is_active !== false)
+        .map((p) => ({
+          id: p.id,
+          full_name: p.full_name,
+          mobile_number: p.mobile_number,
+          role: p.role,
+          is_active: true,
+        }));
     }
 
     const supabase = createAdminClient();
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, mobile_number, role")
+        .select("id, full_name, mobile_number, role, is_active")
+        .or("is_active.is.null,is_active.eq.true")
         .order("created_at", { ascending: true });
 
       if (error || !data || data.length === 0) {
-        return mockStore.getAllProfiles().map((p) => ({
+        return mockStore
+          .getAllProfiles()
+          .filter((p) => p.is_active !== false)
+          .map((p) => ({
+            id: p.id,
+            full_name: p.full_name,
+            mobile_number: p.mobile_number,
+            role: p.role,
+            is_active: true,
+          }));
+      }
+
+      return (data as Array<{ id: string; full_name: string; mobile_number: string; role: UserRole; is_active?: boolean }>)
+        .filter((p) => p.is_active !== false);
+    } catch {
+      return mockStore
+        .getAllProfiles()
+        .filter((p) => p.is_active !== false)
+        .map((p) => ({
           id: p.id,
           full_name: p.full_name,
           mobile_number: p.mobile_number,
           role: p.role,
+          is_active: true,
         }));
-      }
-
-      return data as Array<{ id: string; full_name: string; mobile_number: string; role: UserRole }>;
-    } catch {
-      return mockStore.getAllProfiles().map((p) => ({
-        id: p.id,
-        full_name: p.full_name,
-        mobile_number: p.mobile_number,
-        role: p.role,
-      }));
     }
   },
 
@@ -532,10 +547,11 @@ export const dataService = {
 
   /**
    * Get public member directory (no mobile numbers exposed)
+   * If onlyActive is true, excludes deactivated members
    */
-  async getPublicMembers(): Promise<PublicProfile[]> {
+  async getPublicMembers(onlyActive = false): Promise<PublicProfile[]> {
     if (!isSupabaseConfigured()) {
-      return mockStore.getPublicMembers();
+      return mockStore.getPublicMembers(onlyActive);
     }
 
     const supabase = createAdminClient();
@@ -544,8 +560,11 @@ export const dataService = {
       .select("*")
       .order("created_at", { ascending: true });
 
-    if (error) return [];
-    return data as PublicProfile[];
+    if (error || !data) {
+      return mockStore.getPublicMembers(onlyActive);
+    }
+    const list = data as PublicProfile[];
+    return onlyActive ? list.filter((m) => m.is_active !== false) : list;
   },
 
   /**

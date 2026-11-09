@@ -34,7 +34,7 @@ export function MemberManagementCard({
   onMembersUpdate,
 }: MemberManagementCardProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterTab, setFilterTab] = useState<"all" | "active" | "inactive">("all");
+  const [filterTab, setFilterTab] = useState<"all" | "active" | "inactive">("active");
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const activeCount = useMemo(() => members.filter((m) => m.is_active !== false).length, [members]);

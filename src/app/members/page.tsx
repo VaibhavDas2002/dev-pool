@@ -15,7 +15,9 @@ export default async function MembersPage() {
     redirect("/");
   }
 
-  const members = await dataService.getPublicMembers();
+  const allMembers = await dataService.getPublicMembers();
+  // Strictly filter only active members for public display
+  const members = allMembers.filter((m) => m.is_active !== false);
   const votedCount = members.filter((m) => m.has_voted).length;
 
   return (
@@ -33,10 +35,10 @@ export default async function MembersPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-black tracking-tight text-slate-900">
-                Batch Members ({members.length})
+                Active Batch Members ({members.length})
               </h1>
               <p className="text-sm text-slate-500 mt-1">
-                Registered classmates participating in the certificate collection poll
+                Active registered classmates participating in the certificate collection poll
               </p>
             </div>
 
