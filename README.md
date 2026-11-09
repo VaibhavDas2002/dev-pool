@@ -111,10 +111,12 @@ campus-reunion-poll/
 ## 🛠️ Local Development
 
 ### 1. Prerequisites
+
 - **Node.js** (v18 or higher; tested on v22 & v26)
 - **npm** (v9 or higher)
 
 ### 2. Clone and Install
+
 ```bash
 # Clone the repository
 git clone <repo-url>
@@ -125,7 +127,9 @@ npm install
 ```
 
 ### 3. Environment Variables
+
 Copy the template to create your `.env.local`:
+
 ```bash
 cp .env.example .env.local
 ```
@@ -134,15 +138,19 @@ cp .env.example .env.local
 > The application includes an in-memory mock data store pre-seeded with 15 classmates and active sample votes. You can run `npm run dev` and test immediately without configuring Supabase! When you plug in your Supabase credentials, the app automatically connects to live Supabase Postgres.
 
 ### 4. Run the Dev Server
+
 ```bash
 npm run dev
 ```
+
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### 5. Run the Automated Tests
+
 ```bash
 npm test
 ```
+
 All 20 unit and integration tests will run with Vitest.
 
 ---
@@ -150,26 +158,32 @@ All 20 unit and integration tests will run with Vitest.
 ## 🗄️ Supabase Cloud Setup
 
 ### 1. Create a Supabase Project
+
 1. Log in to [supabase.com](https://supabase.com) and create a new project.
 2. Note your **Project URL** and **API Keys** (`anon` public key and `service_role` secret key).
 
 ### 2. Run Database Migrations
+
 1. In your Supabase Dashboard, navigate to the **SQL Editor**.
 2. Open `supabase/migrations/20261109000000_init_campus_reunion_poll.sql`.
 3. Paste the contents into the SQL Editor and click **Run**.
 4. (Optional) Run `supabase/seed.sql` to populate sample classmates, the default certificate poll, and test chat messages.
 
 ### 3. Enable Supabase Realtime
+
 Ensure Realtime replication is enabled for:
+
 - `chat_messages`
 - `votes`
 - `polls`
 - `poll_options`
 
-*(The migration SQL script automatically configures `ALTER PUBLICATION supabase_realtime ADD TABLE ...`)*.
+_(The migration SQL script automatically configures `ALTER PUBLICATION supabase_realtime ADD TABLE ...`)_.
 
 ### 4. Row Level Security (RLS)
+
 The following policies are active:
+
 - `profiles`: All authenticated users can view public safe columns (`id`, `full_name`, `role`). Mobile numbers are restricted.
 - `votes`: Members can read only their own votes. Aggregates are computed via the secure stored procedure `get_poll_results`.
 - `chat_messages`: Members can read active messages; users can soft-delete only their own messages (`user_id = actor_id`); admins can moderate any message.
@@ -180,6 +194,7 @@ The following policies are active:
 ## 📱 Configuring SMS OTP (Production)
 
 To enable 6-digit SMS OTP via Supabase:
+
 1. Go to **Authentication -> Providers -> Phone** in the Supabase Dashboard.
 2. Turn on **Enable Phone Provider**.
 3. Choose your SMS gateway (Twilio, MessageBird, or AWS SNS) and enter your API credentials.
@@ -218,12 +233,12 @@ To enable 6-digit SMS OTP via Supabase:
 
 ## 🎓 Class Representatives & Demo Credentials
 
-| Role | Name | Mobile Number | Password / Access | Description |
-|---|---|---|---|---|
-| **Class Rep (Admin)** | **Vaibhav Das** | `6297977842` | `abcd@1234` | Full administrative control, date management, tie resolution, moderation |
-| **Batchmate (Member)** | Priya Sharma | `9876543211` | *None required* | Regular classmate voting and discussion |
-| **Batchmate (Member)** | Rohan Gupta | `9876543212` | *None required* | Regular classmate voting and discussion |
+| Role                   | Name            | Mobile Number | Password / Access | Description                                                              |
+| ---------------------- | --------------- | ------------- | ----------------- | ------------------------------------------------------------------------ |
+| **Class Rep (Admin)**  | **Vaibhav Das** | `6297977842`  | `abcd@1234`       | Full administrative control, date management, tie resolution, moderation |
+| **Batchmate (Member)** | Priya Sharma    | `9876543211`  | _None required_   | Regular classmate voting and discussion                                  |
+| **Batchmate (Member)** | Rohan Gupta     | `9876543212`  | _None required_   | Regular classmate voting and discussion                                  |
 
 ---
 
-*Made with ❤️ for our B.Tech College Graduation Reunion.*
+_Made with ❤️ for our B.Tech College Graduation Reunion._
