@@ -96,10 +96,16 @@ Admin can batch-populate eligible dates with one click:
 2. **Closed:** Cutoff reached. Ballots are locked, and no further vote modifications are allowed.
 3. **Finalized:** The winning date is officially confirmed. A prominent celebration banner is published across the platform.
 
-### 3.2 Setting the Cutoff Time
-- Enter the cutoff date and time under **Voting Deadline**.
-- Time is standardized in `Asia/Kolkata` (`IST`).
-- When the deadline expires, the voting form locks automatically without requiring manual intervention.
+### 3.2 Setting the Cutoff Time & Closing Voting
+- **1-Click Countdown Widget Control:** An authorized administrator can click the **"Set by Admin"** button directly on the **"Voting Closes In"** countdown timer card on `/vote`, `/dashboard`, or `/admin`.
+- **Interactive Quick Presets:**
+  - 🔒 **Close Poll Now:** Immediately locks the ballot for all non-admin batchmates.
+  - ⏱️ **+24 Hours:** Extends the countdown by exactly 1 day.
+  - 📅 **+3 Days:** Extends the voting window by 3 days.
+  - 🎓 **Nov 23 End of Day:** Sets the default target (`2026-11-23 11:59 PM`).
+  - 🌅 **Nov 24 Noon:** Sets the pre-collection eve cutoff (`2026-11-24 12:00 PM`).
+- **Custom Local Date & Time Picker:** Allows setting any exact minute with live countdown preview.
+- **Automatic Enforcement:** When the deadline expires or status is set to `closed`, the voting submission form locks automatically for students. Class administrators retain the ability to test and cast votes at any time.
 
 ---
 
