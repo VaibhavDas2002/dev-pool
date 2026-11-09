@@ -158,7 +158,20 @@ export function VoteClientPage({
 
         {/* Voting Deadline Card */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <CountdownTimer targetDate={poll.voting_deadline} label="Voting Closes In" />
+          <CountdownTimer 
+            targetDate={poll.voting_deadline} 
+            label="Voting Closes In"
+            isAdmin={isAdmin}
+            pollId={poll.id}
+            status={poll.status}
+            onDeadlineChange={(newDeadline, newStatus) => {
+              setPoll((prev) => ({
+                ...prev,
+                voting_deadline: newDeadline,
+                status: (newStatus as any) || prev.status,
+              }));
+            }}
+          />
         </div>
       </div>
 

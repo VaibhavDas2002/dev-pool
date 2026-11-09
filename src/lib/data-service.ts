@@ -925,17 +925,38 @@ export const dataService = {
     }
 
     const supabase = createAdminClient();
+    let targetPollId = pollId;
+
+    // Check if target poll exists or fallback to active poll
+    const { data: pollExists } = await supabase
+      .from("polls")
+      .select("id")
+      .eq("id", pollId)
+      .maybeSingle();
+
+    if (!pollExists) {
+      const { data: latestPoll } = await supabase
+        .from("polls")
+        .select("id")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (latestPoll) {
+        targetPollId = latestPoll.id;
+      }
+    }
+
     const { data, error } = await supabase
       .from("polls")
       .update(updates)
-      .eq("id", pollId)
+      .eq("id", targetPollId)
       .select()
       .single();
 
     if (error) throw new Error(error.message || "Failed to update poll configuration");
 
     await supabase.from("poll_audit_logs").insert({
-      poll_id: pollId,
+      poll_id: targetPollId,
       actor_id: actorId,
       action: "UPDATE_POLL_CONFIG",
       new_value: updates,

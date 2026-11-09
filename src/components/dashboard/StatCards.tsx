@@ -13,6 +13,9 @@ interface StatCardsProps {
   status: string;
   finalizedDate?: string | null;
   votingDeadline: string;
+  isAdmin?: boolean;
+  pollId?: string;
+  onDeadlineChange?: (newDeadline: string, newStatus?: string) => void;
 }
 
 export function StatCards({
@@ -24,6 +27,9 @@ export function StatCards({
   status,
   finalizedDate,
   votingDeadline,
+  isAdmin = false,
+  pollId,
+  onDeadlineChange,
 }: StatCardsProps) {
   const turnoutPercentage = totalMembers > 0 ? Math.round((totalVotes / totalMembers) * 100) : 0;
   const isFinalized = status === "finalized" && !!finalizedDate;
@@ -132,6 +138,10 @@ export function StatCards({
               targetDate={isFinalized ? `${finalizedDate}T09:00:00+05:30` : votingDeadline}
               label={isFinalized ? "Reunion Countdown" : "Voting Deadline"}
               isVisitDate={isFinalized}
+              isAdmin={isAdmin}
+              pollId={pollId}
+              status={status}
+              onDeadlineChange={onDeadlineChange}
             />
           </div>
         </CardContent>

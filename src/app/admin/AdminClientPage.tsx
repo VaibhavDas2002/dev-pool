@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Poll, PollResults, PollOption, PublicProfile, ChatMessage, Vote } from "@/types";
-import { formatDisplayDate, formatWithDay, formatChatTime } from "@/lib/utils/date";
+import { formatDisplayDate, formatWithDay, formatChatTime, formatDateTimeLocal } from "@/lib/utils/date";
 import { 
   ShieldAlert, 
   ArrowLeft, 
@@ -20,7 +20,9 @@ import {
   Trophy,
   Vote as VoteIcon,
   ShieldCheck,
-  ArrowRight
+  ArrowRight,
+  Zap,
+  Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,9 +71,7 @@ export function AdminClientPage({
   const [isSubmittingAdminVote, setIsSubmittingAdminVote] = useState(false);
 
   const [pollStatus, setPollStatus] = useState(poll.status);
-  const [votingDeadline, setVotingDeadline] = useState(
-    poll.voting_deadline ? poll.voting_deadline.substring(0, 16) : ""
-  );
+  const [votingDeadline, setVotingDeadline] = useState(() => formatDateTimeLocal(poll.voting_deadline));
   const [disableWeekends, setDisableWeekends] = useState(false);
   const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
 
@@ -364,10 +364,82 @@ export function AdminClientPage({
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                  Voting Deadline (Asia/Kolkata)
-                </label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Voting Deadline (Asia/Kolkata)
+                  </label>
+                  <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">
+                    Set by Class Admin
+                  </span>
+                </div>
+
+                {/* Quick 1-click deadline presets */}
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const past = new Date(Date.now() - 60000);
+                      setVotingDeadline(formatDateTimeLocal(past.toISOString()));
+                      setPollStatus("closed");
+                    }}
+                    className="px-2.5 py-1 rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50/60 dark:bg-rose-950/40 text-[11px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 flex items-center gap-1 transition-all"
+                  >
+                    <Lock className="h-3 w-3 text-rose-600" />
+                    <span>Close Now</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const future = new Date(Date.now() + 24 * 3600000);
+                      setVotingDeadline(formatDateTimeLocal(future.toISOString()));
+                      setPollStatus("open");
+                    }}
+                    className="px-2.5 py-1 rounded-lg border border-indigo-200 dark:border-indigo-900 bg-indigo-50/60 dark:bg-indigo-950/40 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 flex items-center gap-1 transition-all"
+                  >
+                    <Zap className="h-3 w-3 text-indigo-600" />
+                    <span>+24 Hours</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const future = new Date(Date.now() + 72 * 3600000);
+                      setVotingDeadline(formatDateTimeLocal(future.toISOString()));
+                      setPollStatus("open");
+                    }}
+                    className="px-2.5 py-1 rounded-lg border border-indigo-200 dark:border-indigo-900 bg-indigo-50/60 dark:bg-indigo-950/40 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 flex items-center gap-1 transition-all"
+                  >
+                    <Calendar className="h-3 w-3 text-indigo-600" />
+                    <span>+3 Days</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nov23 = new Date("2026-11-23T23:59:59+05:30");
+                      setVotingDeadline(formatDateTimeLocal(nov23.toISOString()));
+                      setPollStatus("open");
+                    }}
+                    className="px-2.5 py-1 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50/60 dark:bg-amber-950/40 text-[11px] font-bold text-amber-800 dark:text-amber-300 hover:bg-amber-100 transition-all"
+                  >
+                    Nov 23 (11:59 PM)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nov24 = new Date("2026-11-24T12:00:00+05:30");
+                      setVotingDeadline(formatDateTimeLocal(nov24.toISOString()));
+                      setPollStatus("open");
+                    }}
+                    className="px-2.5 py-1 rounded-lg border border-purple-200 dark:border-purple-900 bg-purple-50/60 dark:bg-purple-950/40 text-[11px] font-bold text-purple-800 dark:text-purple-300 hover:bg-purple-100 transition-all"
+                  >
+                    Nov 24 (12:00 PM)
+                  </button>
+                </div>
+
                 <input
                   type="datetime-local"
                   className="w-full rounded-xl border border-slate-300 dark:border-slate-700 p-2.5 text-sm bg-white dark:bg-slate-800 font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600"

@@ -50,6 +50,39 @@ export function formatWithDay(dateStr: string | null | undefined): string {
 }
 
 /**
+ * Format full date and time e.g. "Monday, 23 November 2026 at 11:59 PM"
+ */
+export function formatFullDateTime(dateStr: string | null | undefined): string {
+  if (!dateStr) return "TBD";
+  try {
+    const d = new Date(dateStr);
+    return format(d, "EEEE, d MMMM yyyy 'at' h:mm a");
+  } catch {
+    return String(dateStr);
+  }
+}
+
+/**
+ * Convert ISO string or date to YYYY-MM-DDTHH:mm format for datetime-local inputs
+ */
+export function formatDateTimeLocal(dateStr: string | null | undefined): string {
+  if (!dateStr) return "";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "";
+    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+    const year = d.getFullYear();
+    const month = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    const hours = pad(d.getHours());
+    const minutes = pad(d.getMinutes());
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  } catch {
+    return "";
+  }
+}
+
+/**
  * Format timestamp for chat messages e.g. "4:30 PM"
  */
 export function formatChatTime(dateStr: string): string {

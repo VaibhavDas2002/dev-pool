@@ -84,6 +84,8 @@ export default async function DashboardPage() {
           status={poll.status}
           finalizedDate={poll.finalized_date}
           votingDeadline={poll.voting_deadline}
+          isAdmin={user.role === "admin"}
+          pollId={poll.id}
         />
 
         {/* Interactive Client Content: Quick Vote & Results & Chat Preview */}
