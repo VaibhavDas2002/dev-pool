@@ -349,7 +349,7 @@ class CampusReunionStore {
   public getPoll(pollId: string): Poll {
     const found = this.polls.find((p) => p.id === pollId);
     if (found) return found;
-    if (this.polls.length > 0) return this.polls[0];
+    if (this.polls.length > 0) return this.polls[this.polls.length - 1];
     return this.createPoll({});
   }
 
@@ -406,11 +406,18 @@ class CampusReunionStore {
   }
 
   // ==================== ATOMIC VOTING ====================
-  public castOrUpdateVote(pollId: string, optionId: string, userId: string, reason?: string | null) {
-    const poll = this.getPoll(pollId);
+  public castOrUpdateVote(
+    pollId: string,
+    optionId: string,
+    userId: string,
+    reason?: string | null,
+    optionDate?: string | null
+  ) {
+    let poll = this.polls.find((p) => p.id === pollId) || this.polls[0];
     if (!poll) {
       throw new Error("Poll not found");
     }
+    const resolvedPollId = poll.id;
 
     const userProfile = this.profiles.find((p) => p.id === userId);
     const isAdmin = userProfile?.role === "admin";
@@ -430,19 +437,54 @@ class CampusReunionStore {
       }
     }
 
-    const option = this.pollOptions.find((po) => po.id === optionId && po.poll_id === pollId);
+    // Multi-stage option resolution to guarantee accurate option mapping
+    let option = this.pollOptions.find((po) => po.id === optionId && po.poll_id === resolvedPollId);
+    if (!option) {
+      // Check if option ID exists across any poll
+      option = this.pollOptions.find((po) => po.id === optionId);
+    }
+    if (!option && optionDate) {
+      // Find by explicit optionDate
+      option = this.pollOptions.find((po) => po.option_date === optionDate && po.poll_id === resolvedPollId)
+        || this.pollOptions.find((po) => po.option_date === optionDate);
+    }
+    if (!option && optionId && /^\d{4}-\d{2}-\d{2}$/.test(optionId)) {
+      // Option ID itself is a date string
+      option = this.pollOptions.find((po) => po.option_date === optionId && po.poll_id === resolvedPollId)
+        || this.pollOptions.find((po) => po.option_date === optionId);
+    }
+
+    // Auto-create / ensure option if date is a valid reunion date (>= 2026-11-25)
+    const effectiveDate = optionDate || (/^\d{4}-\d{2}-\d{2}$/.test(optionId) ? optionId : null);
+    if (!option && effectiveDate && effectiveDate >= "2026-11-25") {
+      const newOption: PollOption = {
+        id: "c0000000-0000-0000-0000-" + Math.random().toString(16).substring(2, 14),
+        poll_id: resolvedPollId,
+        option_date: effectiveDate,
+        label: null,
+        note: null,
+        is_recommended: false,
+        created_at: new Date().toISOString(),
+      };
+      this.pollOptions.push(newOption);
+      option = newOption;
+    }
+
     if (!option) {
       throw new Error("Invalid date option selected for this poll");
     }
 
-    const existingIndex = this.votes.findIndex((v) => v.poll_id === pollId && v.user_id === userId);
+    const resolvedOptionId = option.id;
+    const targetPollId = option.poll_id || resolvedPollId;
+
+    const existingIndex = this.votes.findIndex((v) => v.poll_id === targetPollId && v.user_id === userId);
     let voteId: string;
     let isUpdate = false;
     const cleanReason = reason !== undefined ? (reason ? reason.trim() : null) : undefined;
 
     if (existingIndex >= 0) {
       isUpdate = true;
-      this.votes[existingIndex].option_id = optionId;
+      this.votes[existingIndex].option_id = resolvedOptionId;
       if (cleanReason !== undefined) {
         this.votes[existingIndex].reason = cleanReason;
       }
@@ -452,8 +494,8 @@ class CampusReunionStore {
       voteId = "v_" + Math.random().toString(36).substring(2, 9);
       this.votes.push({
         id: voteId,
-        poll_id: pollId,
-        option_id: optionId,
+        poll_id: targetPollId,
+        option_id: resolvedOptionId,
         user_id: userId,
         reason: cleanReason !== undefined ? cleanReason : null,
         created_at: new Date().toISOString(),
@@ -467,6 +509,8 @@ class CampusReunionStore {
       is_update: isUpdate,
       selected_date: option.option_date,
       reason: cleanReason !== undefined ? cleanReason : (existingIndex >= 0 ? this.votes[existingIndex].reason : null),
+      poll_id: targetPollId,
+      option_id: resolvedOptionId,
     };
   }
 

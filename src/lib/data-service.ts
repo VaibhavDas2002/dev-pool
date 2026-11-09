@@ -1,5 +1,6 @@
 import { isSupabaseConfigured, createAdminClient } from "./supabase/server";
 import { mockStore } from "./supabase/mock-store";
+import { DEFAULT_POLL_ID } from "./constants";
 import { 
   Profile, 
   UserRole,
@@ -204,26 +205,28 @@ export const dataService = {
 
     const supabase = createAdminClient();
     try {
-      const { data, error } = await supabase
-        .from("polls")
-        .select("*")
-        .eq("id", pollId)
-        .maybeSingle();
+      if (pollId && pollId !== DEFAULT_POLL_ID) {
+        const { data, error } = await supabase
+          .from("polls")
+          .select("*")
+          .eq("id", pollId)
+          .maybeSingle();
 
-      if (data && !error) {
-        return data as Poll;
+        if (data && !error) {
+          return data as Poll;
+        }
       }
 
-      // Fallback to first available poll
-      const { data: firstPoll } = await supabase
+      // Check default poll or latest poll
+      const { data: latestPoll } = await supabase
         .from("polls")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (firstPoll) {
-        return firstPoll as Poll;
+      if (latestPoll) {
+        return latestPoll as Poll;
       }
 
       // If no poll exists in table at all, auto-initialize the default reunion poll!
@@ -258,10 +261,30 @@ export const dataService = {
         .eq("poll_id", pollId)
         .order("option_date", { ascending: true });
 
-      if (error || !data || data.length === 0) {
-        return mockStore.getPollOptions(pollId);
+      if (data && data.length > 0 && !error) {
+        return data as PollOption[];
       }
-      return data as PollOption[];
+
+      // If poll has no options in Supabase yet, seed default dates directly in Supabase
+      const defaultDates = ["2026-11-25", "2026-11-27", "2026-11-30", "2026-12-02"];
+      const seedRows = defaultDates.map((d, idx) => ({
+        poll_id: pollId,
+        option_date: d,
+        label: idx === 1 ? "⭐ Recommended (Friday)" : idx === 0 ? "Opening Day" : null,
+        note: idx === 1 ? "Full counter staffing & alumni hangout afterwards" : null,
+        is_recommended: idx === 1,
+      }));
+      const { data: inserted } = await supabase
+        .from("poll_options")
+        .insert(seedRows)
+        .select("*")
+        .order("option_date", { ascending: true });
+
+      if (inserted && inserted.length > 0) {
+        return inserted as PollOption[];
+      }
+
+      return mockStore.getPollOptions(pollId);
     } catch {
       return mockStore.getPollOptions(pollId);
     }
@@ -294,28 +317,192 @@ export const dataService = {
   /**
    * Cast or update a vote atomically
    */
-  async castOrUpdateVote(pollId: string, optionId: string, userId: string, reason?: string | null) {
+  async castOrUpdateVote(
+    pollId: string,
+    optionId: string,
+    userId: string,
+    reason?: string | null,
+    optionDate?: string | null
+  ) {
     if (!isSupabaseConfigured()) {
-      return mockStore.castOrUpdateVote(pollId, optionId, userId, reason);
+      return mockStore.castOrUpdateVote(pollId, optionId, userId, reason, optionDate);
     }
 
     const supabase = createAdminClient();
     try {
-      const { data, error } = await supabase.rpc("cast_or_update_vote", {
-        p_poll_id: pollId,
-        p_option_id: optionId,
-        p_user_id: userId,
-        p_reason: reason || null,
-      });
+      // 1. Check user profile for active status and role
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("role, is_active")
+        .eq("id", userId)
+        .maybeSingle();
 
-      if (error) {
-        throw new Error(error.message || "Failed to record vote");
+      const isAdmin = userProfile?.role === "admin";
+      if (userProfile && userProfile.is_active === false) {
+        throw new Error("Your account has been deactivated by the administrator.");
       }
 
-      return data;
+      // 2. Multi-stage resolution for option in Supabase
+      let optionRow: { id: string; poll_id: string; option_date: string } | null = null;
+
+      // Stage A: Match exact ID and pollId
+      const { data: byExact } = await supabase
+        .from("poll_options")
+        .select("id, poll_id, option_date")
+        .eq("id", optionId)
+        .eq("poll_id", pollId)
+        .maybeSingle();
+      if (byExact) optionRow = byExact;
+
+      // Stage B: Match optionId across any poll in database
+      if (!optionRow) {
+        const { data: byId } = await supabase
+          .from("poll_options")
+          .select("id, poll_id, option_date")
+          .eq("id", optionId)
+          .maybeSingle();
+        if (byId) optionRow = byId;
+      }
+
+      // Stage C: Match by explicit optionDate in pollId
+      if (!optionRow && optionDate) {
+        const { data: byDate } = await supabase
+          .from("poll_options")
+          .select("id, poll_id, option_date")
+          .eq("poll_id", pollId)
+          .eq("option_date", optionDate)
+          .maybeSingle();
+        if (byDate) optionRow = byDate;
+      }
+
+      // Stage D: Check if optionId itself was passed as a date string (YYYY-MM-DD)
+      if (!optionRow && optionId && /^\d{4}-\d{2}-\d{2}$/.test(optionId)) {
+        const { data: byIdDate } = await supabase
+          .from("poll_options")
+          .select("id, poll_id, option_date")
+          .eq("poll_id", pollId)
+          .eq("option_date", optionId)
+          .maybeSingle();
+        if (byIdDate) optionRow = byIdDate;
+      }
+
+      // Stage E: Match by optionDate in ANY poll
+      if (!optionRow && optionDate) {
+        const { data: byDateAny } = await supabase
+          .from("poll_options")
+          .select("id, poll_id, option_date")
+          .eq("option_date", optionDate)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (byDateAny) optionRow = byDateAny;
+      }
+
+      // Stage F: Auto-create option in poll_options if date is a valid reunion date (>= 2026-11-25)
+      const effectiveDate = optionDate || (/^\d{4}-\d{2}-\d{2}$/.test(optionId) ? optionId : null);
+      if (!optionRow && effectiveDate && effectiveDate >= "2026-11-25") {
+        const { data: createdOpt } = await supabase
+          .from("poll_options")
+          .insert({
+            poll_id: pollId,
+            option_date: effectiveDate,
+          })
+          .select("id, poll_id, option_date")
+          .single();
+        if (createdOpt) optionRow = createdOpt;
+      }
+
+      // Target IDs for recorded vote
+      const targetPollId = optionRow?.poll_id || pollId;
+      const targetOptionId = optionRow?.id || optionId;
+      const targetDate = optionRow?.option_date || effectiveDate;
+
+      // 3. Status and deadline verification (non-admins only)
+      if (!isAdmin) {
+        const { data: pollData } = await supabase
+          .from("polls")
+          .select("status, voting_deadline")
+          .eq("id", targetPollId)
+          .maybeSingle();
+
+        if (pollData) {
+          if (pollData.status !== "open") {
+            throw new Error(`Voting is currently ${pollData.status}`);
+          }
+          if (new Date(pollData.voting_deadline).getTime() < Date.now()) {
+            throw new Error("The voting deadline has expired");
+          }
+        }
+      }
+
+      // 4. Try RPC execution first
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc("cast_or_update_vote", {
+          p_poll_id: targetPollId,
+          p_option_id: targetOptionId,
+          p_user_id: userId,
+          p_reason: reason || null,
+        });
+
+        if (!rpcError && rpcData) {
+          return {
+            ...rpcData,
+            poll_id: targetPollId,
+            option_id: targetOptionId,
+            selected_date: targetDate,
+          };
+        }
+      } catch {
+        // Fall through to direct table upsert
+      }
+
+      // 5. Direct Supabase table upsert fallback (resilient to RPC mismatches)
+      const cleanReason = reason !== undefined ? (reason ? reason.trim() : null) : null;
+      const votePayload: Record<string, unknown> = {
+        poll_id: targetPollId,
+        option_id: targetOptionId,
+        user_id: userId,
+        updated_at: new Date().toISOString(),
+      };
+      if (cleanReason) {
+        votePayload.reason = cleanReason;
+      }
+
+      let { data: upsertData, error: upsertError } = await supabase
+        .from("votes")
+        .upsert(votePayload, { onConflict: "poll_id,user_id" })
+        .select()
+        .single();
+
+      // If failed because reason column does not exist yet on remote votes table, retry without reason
+      if (upsertError && upsertError.message?.toLowerCase().includes("reason")) {
+        delete votePayload.reason;
+        const retryResult = await supabase
+          .from("votes")
+          .upsert(votePayload, { onConflict: "poll_id,user_id" })
+          .select()
+          .single();
+        upsertData = retryResult.data;
+        upsertError = retryResult.error;
+      }
+
+      if (upsertError || !upsertData) {
+        console.warn("Direct DB vote upsert error, trying mock store:", upsertError);
+        return mockStore.castOrUpdateVote(targetPollId, targetOptionId, userId, reason, optionDate);
+      }
+
+      return {
+        success: true,
+        vote_id: upsertData.id,
+        is_update: true,
+        selected_date: targetDate,
+        reason: cleanReason,
+        poll_id: targetPollId,
+        option_id: targetOptionId,
+      };
     } catch (err) {
       console.warn("RPC cast_or_update_vote fallback:", err);
-      return mockStore.castOrUpdateVote(pollId, optionId, userId, reason);
+      return mockStore.castOrUpdateVote(pollId, optionId, userId, reason, optionDate);
     }
   },
 

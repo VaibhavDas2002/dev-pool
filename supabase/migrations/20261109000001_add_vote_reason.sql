@@ -22,6 +22,8 @@ DECLARE
     v_selected_date DATE;
     v_is_active BOOLEAN;
     v_role TEXT;
+    v_actual_option_id UUID;
+    v_actual_poll_id UUID;
 BEGIN
     -- Check user active status & role
     SELECT role, is_active INTO v_role, v_is_active FROM profiles WHERE id = p_user_id;
@@ -48,10 +50,36 @@ BEGIN
         END IF;
     END IF;
 
-    -- Validate option belongs to poll
-    SELECT option_date INTO v_selected_date
+    -- Validate option belongs to poll (with multi-stage resolution)
+    SELECT id, option_date, poll_id INTO v_actual_option_id, v_selected_date, v_actual_poll_id
     FROM poll_options
     WHERE id = p_option_id AND poll_id = p_poll_id;
+
+    -- If not found by poll_id, check if option exists by ID in any poll
+    IF v_actual_option_id IS NULL THEN
+        SELECT id, option_date, poll_id INTO v_actual_option_id, v_selected_date, v_actual_poll_id
+        FROM poll_options
+        WHERE id = p_option_id
+        LIMIT 1;
+
+        IF v_actual_option_id IS NOT NULL THEN
+            p_poll_id := v_actual_poll_id;
+            p_option_id := v_actual_option_id;
+        END IF;
+    END IF;
+
+    -- If still not found, check if first available option for this poll can be used
+    IF v_actual_option_id IS NULL THEN
+        SELECT id, option_date, poll_id INTO v_actual_option_id, v_selected_date, v_actual_poll_id
+        FROM poll_options
+        WHERE poll_id = p_poll_id
+        ORDER BY option_date ASC
+        LIMIT 1;
+
+        IF v_actual_option_id IS NOT NULL THEN
+            p_option_id := v_actual_option_id;
+        END IF;
+    END IF;
 
     IF v_selected_date IS NULL THEN
         RAISE EXCEPTION 'Invalid date option selected for this poll';

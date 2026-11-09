@@ -33,8 +33,9 @@ export const adminLoginSchema = z.object({
 export type AdminLoginInput = z.infer<typeof adminLoginSchema>;
 
 export const voteSchema = z.object({
-  poll_id: z.string().uuid({ message: "Invalid poll ID." }),
-  option_id: z.string().uuid({ message: "Invalid option selected." }),
+  poll_id: z.string().min(1, { message: "Invalid poll ID." }),
+  option_id: z.string().min(1, { message: "Invalid option selected." }),
+  option_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Date must be formatted as YYYY-MM-DD." }).optional().nullable(),
   reason: z.string().trim().max(300, { message: "Reason must be under 300 characters." }).optional().nullable(),
 });
 

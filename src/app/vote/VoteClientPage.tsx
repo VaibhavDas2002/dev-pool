@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Poll, PollResults, PollOption, Vote } from "@/types";
 import { formatDisplayDate, formatWithDay } from "@/lib/utils/date";
@@ -47,11 +47,22 @@ export function VoteClientPage({
   const [results, setResults] = useState<PollResults>(initialResults);
   const [options, setOptions] = useState<PollOption[]>(initialOptions);
   const [userVote, setUserVote] = useState<Vote | null>(initialUserVote);
-  const [selectedOptionId, setSelectedOptionId] = useState<string>(
-    initialUserVote?.option_id || initialOptions[0]?.id || ""
-  );
+  const [selectedOptionId, setSelectedOptionId] = useState<string>(() => {
+    if (initialUserVote?.option_id && initialOptions.some((o) => o.id === initialUserVote.option_id)) {
+      return initialUserVote.option_id;
+    }
+    return initialOptions[0]?.id || "";
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  // Keep selectedOptionId synchronized with valid options
+  useEffect(() => {
+    if (options.length > 0 && !options.some((o) => o.id === selectedOptionId)) {
+      const match = userVote?.option_id ? options.find((o) => o.id === userVote.option_id) : null;
+      setSelectedOptionId(match ? match.id : options[0].id);
+    }
+  }, [options, selectedOptionId, userVote?.option_id]);
 
   const isAdmin = user.role === "admin";
   const isClosed = !isAdmin && (poll.status === "closed" || poll.status === "finalized");
@@ -66,6 +77,8 @@ export function VoteClientPage({
       return;
     }
 
+    const currentOpt = options.find((o) => o.id === selectedOptionId);
+
     try {
       setIsSubmitting(true);
       const res = await fetch("/api/poll/vote", {
@@ -74,6 +87,7 @@ export function VoteClientPage({
         body: JSON.stringify({
           poll_id: poll.id,
           option_id: selectedOptionId,
+          option_date: currentOpt?.option_date || undefined,
           reason: reasonText || undefined,
         }),
       });
@@ -83,15 +97,19 @@ export function VoteClientPage({
         throw new Error(data.error || "Failed to record vote");
       }
 
+      const activePollId = data.result?.poll_id || poll.id;
+      const activeOptionId = data.result?.option_id || selectedOptionId;
+
       setUserVote({
         id: data.result.vote_id,
-        poll_id: poll.id,
-        option_id: selectedOptionId,
+        poll_id: activePollId,
+        option_id: activeOptionId,
         user_id: user.id,
         reason: data.result.reason || reasonText || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
+      setSelectedOptionId(activeOptionId);
 
       if (data.results) {
         setResults(data.results);

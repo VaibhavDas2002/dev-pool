@@ -29,7 +29,7 @@ interface DateOptionCardProps {
     role: "member" | "admin";
   };
   currentUserReason?: string | null;
-  onVote: (optionId: string, reason?: string) => Promise<void>;
+  onVote: (optionId: string, reason?: string, dateStr?: string) => Promise<void>;
 }
 
 export function DateOptionCard({
@@ -56,7 +56,7 @@ export function DateOptionCard({
   const handleConfirmVote = async (reasonText: string) => {
     try {
       setIsSubmitting(true);
-      await onVote(optionId, reasonText);
+      await onVote(optionId, reasonText, dateStr);
       setShowConfigModal(false);
     } finally {
       setIsSubmitting(false);

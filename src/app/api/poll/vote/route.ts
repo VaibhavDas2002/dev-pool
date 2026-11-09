@@ -28,12 +28,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { poll_id, option_id, reason } = validation.data;
+    const { poll_id, option_id, option_date, reason } = validation.data;
 
-    // Cast or update vote atomically
-    const result = await dataService.castOrUpdateVote(poll_id, option_id, user.id, reason);
-    const updatedResults = await dataService.getPollResults(poll_id);
-    const updatedVote = await dataService.getUserVote(poll_id, user.id);
+    // Cast or update vote atomically with robust option and date resolution
+    const result = await dataService.castOrUpdateVote(poll_id, option_id, user.id, reason, option_date);
+    const resolvedPollId = (result && "poll_id" in result && result.poll_id) ? (result.poll_id as string) : poll_id;
+    const updatedResults = await dataService.getPollResults(resolvedPollId);
+    const updatedVote = await dataService.getUserVote(resolvedPollId, user.id);
 
     return NextResponse.json({
       success: true,

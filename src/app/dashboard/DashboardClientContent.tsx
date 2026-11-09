@@ -49,15 +49,17 @@ export function DashboardClientContent({
   // Find currently selected option date
   const selectedOption = options.find((o) => o.id === userVote?.option_id);
 
-  const handleVote = async (optionId: string, reason?: string) => {
+  const handleVote = async (optionId: string, reason?: string, optionDate?: string) => {
     try {
       setIsVoting(true);
+      const matchedOpt = options.find((o) => o.id === optionId);
       const res = await fetch("/api/poll/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           poll_id: poll.id,
           option_id: optionId,
+          option_date: optionDate || matchedOpt?.option_date || undefined,
           reason: reason || undefined,
         }),
       });
@@ -67,10 +69,13 @@ export function DashboardClientContent({
         throw new Error(data.error || "Failed to submit vote");
       }
 
+      const activePollId = data.result?.poll_id || poll.id;
+      const activeOptionId = data.result?.option_id || optionId;
+
       setUserVote({
         id: data.result.vote_id,
-        poll_id: poll.id,
-        option_id: optionId,
+        poll_id: activePollId,
+        option_id: activeOptionId,
         user_id: user.id,
         reason: data.result.reason || reason || null,
         created_at: new Date().toISOString(),
