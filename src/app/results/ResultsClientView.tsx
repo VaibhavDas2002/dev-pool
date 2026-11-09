@@ -20,6 +20,7 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getAvatarStyle } from "@/lib/utils";
 
 interface ResultsClientViewProps {
   user: {
@@ -216,7 +217,7 @@ export function ResultsClientView({
                   </div>
 
                   {/* Horizontal Bar */}
-                  <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden p-0.5">
+                  <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ease-out ${
                         isLeader
@@ -228,6 +229,54 @@ export function ResultsClientView({
                       style={{ width: `${Math.max(2, opt.percentage)}%` }}
                     />
                   </div>
+
+                  {/* Voters & Reasons preview */}
+                  {opt.voters && opt.voters.length > 0 && (
+                    <div className="pt-2 space-y-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
+                          Voters ({opt.voters.length}):
+                        </span>
+                        {opt.voters.map((v) => (
+                          <div
+                            key={v.user_id}
+                            className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 px-2 py-0.5 rounded-lg text-xs"
+                            title={v.reason ? `"${v.reason}"` : undefined}
+                          >
+                            <div
+                              style={getAvatarStyle(v.full_name)}
+                              className="h-4 w-4 rounded-full text-[8px] font-black text-white flex items-center justify-center shrink-0"
+                            >
+                              {v.initials}
+                            </div>
+                            <span className="font-semibold text-[11px] text-slate-800 dark:text-slate-200">
+                              {v.full_name} {v.user_id === user.id ? "(You)" : ""}
+                            </span>
+                            {v.reason && (
+                              <span className="text-indigo-600 dark:text-indigo-400 text-[10px]">💬</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Reasons list for this date */}
+                      {opt.voters.some((v) => v.reason) && (
+                        <div className="space-y-1.5 bg-slate-50/80 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                            Batchmate Notes:
+                          </p>
+                          {opt.voters.filter((v) => v.reason).map((v) => (
+                            <div key={v.user_id + '-reason'} className="text-[11px] text-slate-600 dark:text-slate-300 flex items-start gap-1.5">
+                              <span className="font-bold text-slate-900 dark:text-slate-100 shrink-0">
+                                {v.full_name} {v.user_id === user.id ? "(You)" : ""}:
+                              </span>
+                              <span className="italic leading-snug">&ldquo;{v.reason}&rdquo;</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })

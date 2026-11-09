@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getInitials, getAvatarStyle } from "@/lib/utils";
+import { VoteConfirmationModal } from "@/components/polling/VoteConfirmationModal";
 import { toast } from "sonner";
 
 interface VoteClientPageProps {
@@ -58,7 +59,7 @@ export function VoteClientPage({
   const currentOption = options.find((o) => o.id === selectedOptionId);
   const votedOption = options.find((o) => o.id === userVote?.option_id);
 
-  const handleVoteSubmit = async () => {
+  const handleVoteSubmit = async (reasonText?: string) => {
     if (!selectedOptionId) {
       toast.error("Please select a date option");
       return;
@@ -72,6 +73,7 @@ export function VoteClientPage({
         body: JSON.stringify({
           poll_id: poll.id,
           option_id: selectedOptionId,
+          reason: reasonText || undefined,
         }),
       });
 
@@ -85,6 +87,7 @@ export function VoteClientPage({
         poll_id: poll.id,
         option_id: selectedOptionId,
         user_id: user.id,
+        reason: data.result.reason || reasonText || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
@@ -95,9 +98,9 @@ export function VoteClientPage({
 
       setShowConfirmModal(false);
       if (data.result.is_update) {
-        toast.success("Your preferred date has been updated!");
+        toast.success("Your preferred date & travel note have been updated! 🎓");
       } else {
-        toast.success("Your vote has been recorded successfully!");
+        toast.success("Your vote has been recorded successfully! 🎓");
       }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Vote submission failed");
@@ -112,7 +115,7 @@ export function VoteClientPage({
       <div>
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Back to Dashboard</span>
@@ -122,27 +125,76 @@ export function VoteClientPage({
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700 border border-indigo-200/60 mb-2">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/70 px-3 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800 mb-2">
             <VoteIcon className="h-3.5 w-3.5" />
             <span>Official B.Tech Poll</span>
           </div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">
             {poll.title}
           </h1>
-          <p className="text-sm text-slate-500 mt-1 max-w-xl">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
             {poll.subtitle}
           </p>
         </div>
 
         {/* Voting Deadline Card */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
           <CountdownTimer targetDate={poll.voting_deadline} label="Voting Closes In" />
         </div>
       </div>
 
+      {/* User's Active Vote Banner */}
+      {userVote && votedOption && (
+        <div className="rounded-2xl border border-indigo-200/90 dark:border-indigo-800/80 bg-indigo-50/50 dark:bg-indigo-950/40 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
+          <div className="flex items-start gap-3">
+            <div
+              style={getAvatarStyle(user.full_name)}
+              className="h-10 w-10 rounded-xl text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs"
+            >
+              {getInitials(user.full_name)}
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                  Your Current Choice:
+                </span>
+                <span className="font-extrabold text-sm text-slate-900 dark:text-slate-100">
+                  {formatWithDay(votedOption.option_date)}
+                </span>
+                <Badge variant="success" className="text-[10px] py-0 px-2 font-bold">
+                  Active Vote
+                </Badge>
+              </div>
+              {userVote.reason ? (
+                <div className="mt-1 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1.5">
+                  <span className="text-indigo-600 dark:text-indigo-400 font-bold shrink-0">💬 Your Note:</span>
+                  <span className="italic leading-relaxed">&ldquo;{userVote.reason}&rdquo;</span>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 italic">
+                  No note added. Click below to add your travel / availability reason.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setSelectedOptionId(votedOption.id);
+              setShowConfirmModal(true);
+            }}
+            className="text-xs h-8 px-3 rounded-xl border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-white dark:hover:bg-slate-900 font-bold"
+          >
+            Edit Note / Date
+          </Button>
+        </div>
+      )}
+
       {/* Closed warning */}
       {(isClosed || deadlinePassed) && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-800 flex items-center gap-2">
+        <div className="rounded-2xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-4 text-xs text-rose-800 dark:text-rose-200 flex items-center gap-2">
           <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
           <span>
             Voting is currently closed. Results are final or being evaluated by the class administrator.
@@ -304,14 +356,35 @@ export function VoteClientPage({
                   )}
 
                   {isAlreadyVoted && (
-                    <div className="mb-3 flex items-center gap-2 p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-[11px] font-bold text-indigo-900 dark:text-indigo-200">
-                      <div
-                        style={getAvatarStyle(user.full_name)}
-                        className="h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-2xs"
-                      >
-                        {getInitials(user.full_name)}
+                    <div className="mb-3 p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-[11px] font-bold text-indigo-900 dark:text-indigo-200 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <div
+                            style={getAvatarStyle(user.full_name)}
+                            className="h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-2xs"
+                          >
+                            {getInitials(user.full_name)}
+                          </div>
+                          <span>Your vote confirmed!</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedOptionId(option.id);
+                            setShowConfirmModal(true);
+                          }}
+                          className="text-[10px] text-indigo-600 dark:text-indigo-400 underline font-bold hover:text-indigo-800"
+                        >
+                          Edit Note
+                        </button>
                       </div>
-                      <span>Your vote confirmed!</span>
+                      {userVote?.reason && (
+                        <div className="text-[10px] font-normal italic text-slate-600 dark:text-slate-300 pl-6 flex items-start gap-1">
+                          <span className="text-indigo-600 dark:text-indigo-400 not-italic shrink-0">💬</span>
+                          <span>&ldquo;{userVote.reason}&rdquo;</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -348,55 +421,19 @@ export function VoteClientPage({
       </div>
       </div>
 
-      {/* Confirmation Modal */}
-      {showConfirmModal && currentOption && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-                <VoteIcon className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">
-                  {userVote ? "Update Your Preference?" : "Confirm Your Vote"}
-                </h3>
-                <p className="text-xs text-slate-500">
-                  {user.full_name} &bull; Campus Reunion Poll
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-2xl bg-indigo-50/70 border border-indigo-100 p-4 space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
-                Selected Date:
-              </p>
-              <p className="text-xl font-black text-slate-900">
-                {formatWithDay(currentOption.option_date)}
-              </p>
-              <p className="text-xs text-slate-500 pt-1">
-                You can change this date any time before the voting deadline.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowConfirmModal(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="bg-indigo-600 hover:bg-indigo-700"
-                onClick={handleVoteSubmit}
-                isLoading={isSubmitting}
-              >
-                Confirm Selection
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Vote Configuration & Reason Modal */}
+      <VoteConfirmationModal
+        isOpen={showConfirmModal && !!currentOption}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleVoteSubmit}
+        selectedDate={currentOption?.option_date || ""}
+        label={currentOption?.label}
+        note={currentOption?.note}
+        isRecommended={currentOption?.is_recommended}
+        currentReason={userVote?.option_id === selectedOptionId ? userVote?.reason : ""}
+        isUpdate={!!userVote}
+        isLoading={isSubmitting}
+      />
     </div>
   );
 }

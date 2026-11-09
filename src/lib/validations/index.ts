@@ -35,6 +35,7 @@ export type AdminLoginInput = z.infer<typeof adminLoginSchema>;
 export const voteSchema = z.object({
   poll_id: z.string().uuid({ message: "Invalid poll ID." }),
   option_id: z.string().uuid({ message: "Invalid option selected." }),
+  reason: z.string().trim().max(300, { message: "Reason must be under 300 characters." }).optional().nullable(),
 });
 
 export type VoteInput = z.infer<typeof voteSchema>;

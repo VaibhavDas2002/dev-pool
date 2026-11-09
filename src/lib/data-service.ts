@@ -294,9 +294,9 @@ export const dataService = {
   /**
    * Cast or update a vote atomically
    */
-  async castOrUpdateVote(pollId: string, optionId: string, userId: string) {
+  async castOrUpdateVote(pollId: string, optionId: string, userId: string, reason?: string | null) {
     if (!isSupabaseConfigured()) {
-      return mockStore.castOrUpdateVote(pollId, optionId, userId);
+      return mockStore.castOrUpdateVote(pollId, optionId, userId, reason);
     }
 
     const supabase = createAdminClient();
@@ -305,6 +305,7 @@ export const dataService = {
         p_poll_id: pollId,
         p_option_id: optionId,
         p_user_id: userId,
+        p_reason: reason || null,
       });
 
       if (error) {
@@ -314,7 +315,7 @@ export const dataService = {
       return data;
     } catch (err) {
       console.warn("RPC cast_or_update_vote fallback:", err);
-      return mockStore.castOrUpdateVote(pollId, optionId, userId);
+      return mockStore.castOrUpdateVote(pollId, optionId, userId, reason);
     }
   },
 

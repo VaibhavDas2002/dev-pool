@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { OptionVoter } from "@/types";
 import { getInitials, getAvatarStyle } from "@/lib/utils";
+import { VoteConfirmationModal } from "@/components/polling/VoteConfirmationModal";
 
 interface DateOptionCardProps {
   pollId: string;
@@ -27,7 +28,8 @@ interface DateOptionCardProps {
     full_name: string;
     role: "member" | "admin";
   };
-  onVote: (optionId: string) => Promise<void>;
+  currentUserReason?: string | null;
+  onVote: (optionId: string, reason?: string) => Promise<void>;
 }
 
 export function DateOptionCard({
@@ -44,17 +46,18 @@ export function DateOptionCard({
   isClosed,
   voters = [],
   currentUser,
+  currentUserReason,
   onVote,
 }: DateOptionCardProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
   const [showVotersModal, setShowVotersModal] = useState(false);
 
-  const handleVoteClick = async () => {
+  const handleConfirmVote = async (reasonText: string) => {
     try {
       setIsSubmitting(true);
-      await onVote(optionId);
-      setShowConfirm(false);
+      await onVote(optionId, reasonText);
+      setShowConfigModal(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -208,38 +211,26 @@ export function DateOptionCard({
               Polling Closed
             </Button>
           ) : isSelected ? (
-            <div className="flex items-center justify-center gap-2 text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100/60 dark:bg-indigo-950/60 py-2 rounded-xl">
-              <CheckCircle2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-              Vote Recorded ({userInitial})
-            </div>
-          ) : showConfirm ? (
-            <div className="flex items-center gap-2 animate-in fade-in">
-              <Button
-                size="sm"
-                variant="default"
-                className="flex-1 text-xs h-9 bg-indigo-600 hover:bg-indigo-700 font-bold"
-                onClick={handleVoteClick}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-                Confirm Vote ({userInitial})
-              </Button>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100/60 dark:bg-indigo-950/60 py-2 rounded-xl">
+                <CheckCircle2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                <span>Your Vote ({userInitial})</span>
+              </div>
               <Button
                 size="sm"
                 variant="outline"
-                className="text-xs h-9"
-                onClick={() => setShowConfirm(false)}
-                disabled={isSubmitting}
+                className="text-xs h-9 px-3 rounded-xl border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50"
+                onClick={() => setShowConfigModal(true)}
               >
-                Cancel
+                Edit Note
               </Button>
             </div>
           ) : (
             <Button
               size="sm"
               variant="outline"
-              className="w-full text-xs h-9 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-300 dark:hover:border-indigo-800"
-              onClick={() => setShowConfirm(true)}
+              className="w-full text-xs h-9 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-300 dark:hover:border-indigo-800 font-bold"
+              onClick={() => setShowConfigModal(true)}
             >
               Vote for this Date
               <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
@@ -274,14 +265,26 @@ export function DateOptionCard({
             </div>
 
             {isSelected && (
-              <div className="flex items-center gap-2 p-2.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-xs font-bold text-indigo-900 dark:text-indigo-200">
-                <div
-                  style={getAvatarStyle(currentUser?.full_name || "You")}
-                  className="h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-black text-white shrink-0 shadow-2xs"
-                >
-                  {userInitial}
+              <div className="flex items-center justify-between gap-2 p-2.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-xs font-bold text-indigo-900 dark:text-indigo-200">
+                <div className="flex items-center gap-2">
+                  <div
+                    style={getAvatarStyle(currentUser?.full_name || "You")}
+                    className="h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-black text-white shrink-0 shadow-2xs"
+                  >
+                    {userInitial}
+                  </div>
+                  <span>You voted for this date!</span>
                 </div>
-                <span>You voted for this date!</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowVotersModal(false);
+                    setShowConfigModal(true);
+                  }}
+                  className="text-[11px] text-indigo-600 dark:text-indigo-400 underline font-bold"
+                >
+                  Edit
+                </button>
               </div>
             )}
 
@@ -294,33 +297,42 @@ export function DateOptionCard({
                   No batchmates have voted for this date yet.
                 </p>
               ) : (
-                <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
                   {voters.map((v) => (
                     <div
                       key={v.user_id}
-                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800"
+                      className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 space-y-1.5"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div
-                          style={getAvatarStyle(v.full_name)}
-                          className="h-7 w-7 rounded-full text-xs font-black text-white flex items-center justify-center shrink-0 shadow-2xs"
-                        >
-                          {v.initials}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div
+                            style={getAvatarStyle(v.full_name)}
+                            className="h-7 w-7 rounded-full text-xs font-black text-white flex items-center justify-center shrink-0 shadow-2xs"
+                          >
+                            {v.initials}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                              {v.full_name} {v.user_id === currentUser?.id ? "(You)" : ""}
+                            </p>
+                            <p className="text-[10px] text-slate-400 capitalize">
+                              {v.role}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
-                            {v.full_name} {v.user_id === currentUser?.id ? "(You)" : ""}
-                          </p>
-                          <p className="text-[10px] text-slate-400 capitalize">
-                            {v.role}
-                          </p>
-                        </div>
+
+                        {v.user_id === currentUser?.id && (
+                          <Badge variant="default" className="text-[10px] bg-indigo-600">
+                            Your Vote
+                          </Badge>
+                        )}
                       </div>
 
-                      {v.user_id === currentUser?.id && (
-                        <Badge variant="default" className="text-[10px] bg-indigo-600">
-                          Your Vote
-                        </Badge>
+                      {v.reason && (
+                        <div className="text-[11px] text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900/80 p-2 rounded-lg border border-slate-100 dark:border-slate-800 flex items-start gap-1.5">
+                          <span className="text-indigo-600 dark:text-indigo-400 font-bold shrink-0">💬</span>
+                          <span className="italic leading-snug">&ldquo;{v.reason}&rdquo;</span>
+                        </div>
                       )}
                     </div>
                   ))}
@@ -338,6 +350,20 @@ export function DateOptionCard({
           </div>
         </div>
       )}
+
+      {/* Vote Configuration & Reason Modal */}
+      <VoteConfirmationModal
+        isOpen={showConfigModal}
+        onClose={() => setShowConfigModal(false)}
+        onConfirm={handleConfirmVote}
+        selectedDate={dateStr}
+        label={label}
+        note={note}
+        isRecommended={isRecommended}
+        currentReason={currentUserReason || voters.find((v) => v.user_id === currentUser?.id)?.reason || ""}
+        isUpdate={isSelected}
+        isLoading={isSubmitting}
+      />
     </>
   );
 }

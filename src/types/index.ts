@@ -21,6 +21,7 @@ export interface PublicProfile {
   has_voted: boolean;
   voted_option_id?: string | null;
   voted_date?: string | null;
+  voted_reason?: string | null;
 }
 
 export interface Poll {
@@ -56,6 +57,7 @@ export interface Vote {
   poll_id: string;
   option_id: string;
   user_id: string;
+  reason?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -65,6 +67,8 @@ export interface OptionVoter {
   full_name: string;
   initials: string;
   role: UserRole;
+  reason?: string | null;
+  voted_at?: string;
 }
 
 export interface OptionResult {

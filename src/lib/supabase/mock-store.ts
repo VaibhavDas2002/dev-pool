@@ -193,21 +193,21 @@ class CampusReunionStore {
 
   private votes: Vote[] = [
     // 27 Nov (Option 2): 6 seed votes
-    { id: "v1", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000002", user_id: "a0000000-0000-0000-0000-000000000001", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: "v2", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000002", user_id: "a0000000-0000-0000-0000-000000000002", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: "v3", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000002", user_id: "a0000000-0000-0000-0000-000000000003", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: "v4", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000002", user_id: "a0000000-0000-0000-0000-000000000004", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: "v5", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000002", user_id: "a0000000-0000-0000-0000-000000000005", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: "v6", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000002", user_id: "a0000000-0000-0000-0000-000000000006", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "v1", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000002", user_id: "a0000000-0000-0000-0000-000000000001", reason: "Convenient Friday before weekend; counters confirmed open.", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "v2", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000002", user_id: "a0000000-0000-0000-0000-000000000002", reason: "Weekend travel is easiest for outstation batchmates.", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "v3", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000002", user_id: "a0000000-0000-0000-0000-000000000003", reason: "Planning group lunch at Maggi Point after certificate counter! 🍜", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "v4", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000002", user_id: "a0000000-0000-0000-0000-000000000004", reason: "Best day for batch photo on library stairs with everyone. 📸", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "v5", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000002", user_id: "a0000000-0000-0000-0000-000000000005", reason: "Coming with Priya and Rohan in car pool.", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "v6", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000002", user_id: "a0000000-0000-0000-0000-000000000006", reason: "Confirmed faculty & HOD available that morning.", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
     // 30 Nov (Option 3): 3 votes
-    { id: "v7", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000003", user_id: "a0000000-0000-0000-0000-000000000007", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: "v8", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000003", user_id: "a0000000-0000-0000-0000-000000000008", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: "v9", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000003", user_id: "a0000000-0000-0000-0000-000000000009", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "v7", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000003", user_id: "a0000000-0000-0000-0000-000000000007", reason: "Taking leave from office on Monday.", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "v8", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000003", user_id: "a0000000-0000-0000-0000-000000000008", reason: "Month end date works nicely.", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "v9", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000003", user_id: "a0000000-0000-0000-0000-000000000009", reason: "Free after project submission.", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
     // 25 Nov (Option 1): 2 votes
-    { id: "v10", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000001", user_id: "a0000000-0000-0000-0000-000000000010", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: "v11", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000001", user_id: "a0000000-0000-0000-0000-000000000011", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "v10", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000001", user_id: "a0000000-0000-0000-0000-000000000010", reason: "Earliest official day to collect certificates.", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "v11", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000001", user_id: "a0000000-0000-0000-0000-000000000011", reason: "Less crowd expected on day one.", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
     // 02 Dec (Option 4): 1 vote
-    { id: "v12", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000004", user_id: "a0000000-0000-0000-0000-000000000012", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: "v12", poll_id: "b0000000-0000-0000-0000-000000000001", option_id: "c0000000-0000-0000-0000-000000000004", user_id: "a0000000-0000-0000-0000-000000000012", reason: "December timing gives extra preparation buffer.", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   ];
 
   private chatMessages: ChatMessage[] = [
@@ -311,6 +311,7 @@ class CampusReunionStore {
         has_voted: !!vote,
         voted_option_id: vote ? vote.option_id : null,
         voted_date: votedOption ? votedOption.option_date : null,
+        voted_reason: vote ? vote.reason : null,
       };
     });
   }
@@ -405,7 +406,7 @@ class CampusReunionStore {
   }
 
   // ==================== ATOMIC VOTING ====================
-  public castOrUpdateVote(pollId: string, optionId: string, userId: string) {
+  public castOrUpdateVote(pollId: string, optionId: string, userId: string, reason?: string | null) {
     const poll = this.getPoll(pollId);
     if (!poll) {
       throw new Error("Poll not found");
@@ -432,10 +433,14 @@ class CampusReunionStore {
     const existingIndex = this.votes.findIndex((v) => v.poll_id === pollId && v.user_id === userId);
     let voteId: string;
     let isUpdate = false;
+    const cleanReason = reason !== undefined ? (reason ? reason.trim() : null) : undefined;
 
     if (existingIndex >= 0) {
       isUpdate = true;
       this.votes[existingIndex].option_id = optionId;
+      if (cleanReason !== undefined) {
+        this.votes[existingIndex].reason = cleanReason;
+      }
       this.votes[existingIndex].updated_at = new Date().toISOString();
       voteId = this.votes[existingIndex].id;
     } else {
@@ -445,6 +450,7 @@ class CampusReunionStore {
         poll_id: pollId,
         option_id: optionId,
         user_id: userId,
+        reason: cleanReason !== undefined ? cleanReason : null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
@@ -455,6 +461,7 @@ class CampusReunionStore {
       vote_id: voteId,
       is_update: isUpdate,
       selected_date: option.option_date,
+      reason: cleanReason !== undefined ? cleanReason : (existingIndex >= 0 ? this.votes[existingIndex].reason : null),
     };
   }
 
@@ -481,6 +488,8 @@ class CampusReunionStore {
           full_name: name,
           initials: getInitials(name),
           role: prof?.role || "member",
+          reason: v.reason || null,
+          voted_at: v.updated_at || v.created_at,
         };
       });
       return {

@@ -208,25 +208,42 @@ export function CalendarView({
           )}
 
           {detailVoters.length > 0 ? (
-            <div>
-              <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">
-                Batchmates who voted for this date:
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                Batchmates who voted for this date ({detailVoters.length}):
               </p>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
                 {detailVoters.map((v) => (
                   <div
                     key={v.user_id}
-                    className="inline-flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded-xl shadow-2xs"
+                    className="flex flex-col gap-1.5 bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 p-2.5 rounded-xl shadow-2xs"
                   >
-                    <div
-                      style={getAvatarStyle(v.full_name)}
-                      className="h-4 w-4 rounded-full text-[9px] font-black text-white flex items-center justify-center shrink-0"
-                    >
-                      {v.initials}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          style={getAvatarStyle(v.full_name)}
+                          className="h-6 w-6 rounded-full text-[10px] font-black text-white flex items-center justify-center shrink-0 shadow-2xs"
+                        >
+                          {v.initials}
+                        </div>
+                        <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                          {v.full_name} {v.user_id === currentUserId ? "(You)" : ""}
+                        </span>
+                      </div>
+
+                      {v.role === "admin" && (
+                        <span className="text-[9px] font-bold bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded-md shrink-0">
+                          Admin
+                        </span>
+                      )}
                     </div>
-                    <span className="text-[11px] font-medium text-slate-800 dark:text-slate-200">
-                      {v.full_name} {v.user_id === currentUserId ? "(You)" : ""}
-                    </span>
+
+                    {v.reason && (
+                      <div className="text-[11px] text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/70 p-2 rounded-lg border border-slate-100 dark:border-slate-800 flex items-start gap-1.5">
+                        <span className="text-indigo-600 dark:text-indigo-400 font-bold shrink-0">💬</span>
+                        <span className="italic leading-snug">&ldquo;{v.reason}&rdquo;</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

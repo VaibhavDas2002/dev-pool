@@ -49,7 +49,7 @@ export function DashboardClientContent({
   // Find currently selected option date
   const selectedOption = options.find((o) => o.id === userVote?.option_id);
 
-  const handleVote = async (optionId: string) => {
+  const handleVote = async (optionId: string, reason?: string) => {
     try {
       setIsVoting(true);
       const res = await fetch("/api/poll/vote", {
@@ -58,6 +58,7 @@ export function DashboardClientContent({
         body: JSON.stringify({
           poll_id: poll.id,
           option_id: optionId,
+          reason: reason || undefined,
         }),
       });
 
@@ -71,6 +72,7 @@ export function DashboardClientContent({
         poll_id: poll.id,
         option_id: optionId,
         user_id: user.id,
+        reason: data.result.reason || reason || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
@@ -80,7 +82,7 @@ export function DashboardClientContent({
       }
 
       if (data.result.is_update) {
-        toast.success("Your preferred date has been updated! 🎓");
+        toast.success("Your vote & travel note have been updated! 🎓");
       } else {
         toast.success("Your vote has been recorded successfully! 🎓");
       }
@@ -96,40 +98,61 @@ export function DashboardClientContent({
   return (
     <div className="space-y-8">
       {/* User Personal Vote Status Banner */}
-      <div className="rounded-2xl border border-indigo-200 bg-white p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-            <VoteIcon className="h-5 w-5" />
+      <div className="rounded-3xl border border-indigo-200/90 dark:border-indigo-800/80 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 mt-0.5">
+            <VoteIcon className="h-6 w-6" />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Your Voting Status
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+              <span>Your Official Vote</span>
+              <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+              <span>{user.full_name}</span>
             </p>
             {userVote && selectedOption ? (
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="font-extrabold text-slate-900 text-base">
-                  You voted for {formatDisplayDate(selectedOption.option_date)}
-                </span>
-                <Badge variant="success" className="text-xs">
-                  Active Vote
-                </Badge>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-black text-slate-900 dark:text-slate-100 text-lg">
+                    {formatWithDay(selectedOption.option_date)}
+                  </span>
+                  <Badge variant="success" className="text-xs font-bold gap-1 py-0.5">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Active Vote Confirmed
+                  </Badge>
+                </div>
+
+                {userVote.reason ? (
+                  <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 bg-indigo-50/70 dark:bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-800/80 flex items-start gap-2">
+                    <span className="text-indigo-600 dark:text-indigo-400 font-bold shrink-0">💬 Your Note:</span>
+                    <span className="italic leading-relaxed">&ldquo;{userVote.reason}&rdquo;</span>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 italic">
+                    No travel note added yet. You can add one anytime so batchmates know your plans!
+                  </p>
+                )}
               </div>
             ) : (
-              <p className="font-bold text-amber-700 text-sm mt-0.5">
-                You haven&apos;t voted yet. Please select your preferred date below!
-              </p>
+              <div>
+                <p className="font-extrabold text-amber-700 dark:text-amber-400 text-base">
+                  You haven&apos;t cast your vote yet!
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Choose your preferred date below and let your batch know when you can make it.
+                </p>
+              </div>
             )}
-            <p className="text-xs text-slate-400 mt-0.5">
-              {!isClosed ? "You can change your vote anytime before polling closes." : "Voting is closed."}
-            </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0 w-full sm:w-auto">
           <CertificateChecklistModal finalizedDate={poll.finalized_date} />
-          <Link href="/vote">
-            <Button variant="outline" size="sm" className="shrink-0 text-xs gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50">
-              <span>{userVote ? "Change Vote" : "Cast Vote Now"}</span>
+          <Link href="/vote" className="w-full sm:w-auto">
+            <Button
+              className="w-full sm:w-auto text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-sm"
+              size="sm"
+            >
+              <span>{userVote ? "Edit Vote or Reason" : "Cast Vote Now"}</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </Link>
@@ -178,6 +201,7 @@ export function DashboardClientContent({
                   isClosed={isClosed}
                   voters={optResult?.voters || []}
                   currentUser={user}
+                  currentUserReason={isSelected ? userVote?.reason : undefined}
                   onVote={handleVote}
                 />
               );

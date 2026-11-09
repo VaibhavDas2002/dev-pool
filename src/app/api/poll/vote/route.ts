@@ -28,15 +28,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { poll_id, option_id } = validation.data;
+    const { poll_id, option_id, reason } = validation.data;
 
     // Cast or update vote atomically
-    const result = await dataService.castOrUpdateVote(poll_id, option_id, user.id);
+    const result = await dataService.castOrUpdateVote(poll_id, option_id, user.id, reason);
     const updatedResults = await dataService.getPollResults(poll_id);
+    const updatedVote = await dataService.getUserVote(poll_id, user.id);
 
     return NextResponse.json({
       success: true,
       result,
+      vote: updatedVote,
       results: updatedResults,
     });
   } catch (err: unknown) {
